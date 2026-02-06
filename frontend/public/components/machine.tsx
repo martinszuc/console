@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC } from 'react';
+import { useMemo, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   getMachineAddresses,
@@ -33,7 +34,6 @@ import {
   actionsCellProps,
   cellIsStickyProps,
   getNameCellProps,
-  initialFiltersDefault,
   ConsoleDataView,
 } from '@console/app/src/components/data-view/ConsoleDataView';
 import {
@@ -110,7 +110,7 @@ const getDataViewRows = (data: { obj: MachineKind }[], columns: TableColumn<Mach
   });
 };
 
-const MachineDetails: React.FCC<MachineDetailsProps> = ({ obj }: { obj: MachineKind }) => {
+const MachineDetails: FC<MachineDetailsProps> = ({ obj }: { obj: MachineKind }) => {
   const nodeName = getMachineNodeName(obj);
   const machineRole = getMachineRole(obj);
   const instanceType = getMachineInstanceType(obj);
@@ -200,7 +200,7 @@ type MachineListProps = {
 const useMachineColumns = (): TableColumn<MachineKind>[] => {
   const { t } = useTranslation();
 
-  const columns: TableColumn<MachineKind>[] = React.useMemo(() => {
+  const columns: TableColumn<MachineKind>[] = useMemo(() => {
     return [
       {
         title: t('public~Name'),
@@ -271,11 +271,11 @@ const useMachineColumns = (): TableColumn<MachineKind>[] => {
   return columns;
 };
 
-export const MachineList: React.FC<MachineListProps> = ({ data, loaded, loadError, ...props }) => {
+export const MachineList: FC<MachineListProps> = ({ data, loaded, loadError, ...props }) => {
   const columns = useMachineColumns();
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView<MachineKind>
         {...props}
         label={MachineModel.labelPlural}
@@ -283,15 +283,14 @@ export const MachineList: React.FC<MachineListProps> = ({ data, loaded, loadErro
         loaded={loaded}
         loadError={loadError}
         columns={columns}
-        initialFilters={initialFiltersDefault}
         getDataViewRows={getDataViewRows}
         hideColumnManagement={true}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 
-export const MachinePage: React.FC<MachinePageProps> = ({
+export const MachinePage: FC<MachinePageProps> = ({
   selector,
   namespace,
   showTitle = true,
@@ -335,7 +334,7 @@ export const MachinePage: React.FC<MachinePageProps> = ({
   );
 };
 
-export const MachineDetailsPage: React.FCC = (props) => (
+export const MachineDetailsPage: FC = (props) => (
   <DetailsPage
     {...props}
     kind={machineReference}

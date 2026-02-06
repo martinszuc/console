@@ -134,7 +134,7 @@ const config: Configuration = {
       },
       {
         test: /(\.jsx?)|(\.tsx?)$/,
-        exclude: /node_modules\/(?!(bitbucket|ky|ini)\/)/,
+        exclude: /node_modules\/(?!(bitbucket|ky|ini|@patternfly(-\S+)?)\/)/,
         use: [
           // Disable thread-loader in CI
           ...(!OPENSHIFT_CI
@@ -165,7 +165,7 @@ const config: Configuration = {
       },
       {
         test: /\.s?css$/,
-        exclude: /node_modules\/(?!(@patternfly(-\S+)?|@console\/plugin-shared)\/).*/,
+        exclude: /node_modules\/(?!(@patternfly(-\S+)?)\/).*/,
         use: [
           {
             loader: MiniCssExtractPlugin.loader,
@@ -236,7 +236,7 @@ const config: Configuration = {
           },
         },
         'vendor-plugins-shared': {
-          test(module: { resource?: string }) {
+          test(module: webpack.NormalModule) {
             return (
               module.resource &&
               sharedPluginModulesTest.test(module.resource) &&
@@ -307,7 +307,6 @@ const config: Configuration = {
         { from: path.resolve(__dirname, './packages/dev-console/locales'), to: 'locales' },
         { from: path.resolve(__dirname, './packages/knative-plugin/locales'), to: 'locales' },
         { from: path.resolve(__dirname, './packages/container-security/locales'), to: 'locales' },
-        { from: path.resolve(__dirname, './packages/pipelines-plugin/locales'), to: 'locales' },
         { from: path.resolve(__dirname, './packages/shipwright-plugin/locales'), to: 'locales' },
         { from: path.resolve(__dirname, './packages/webterminal-plugin/locales'), to: 'locales' },
         { from: path.resolve(__dirname, './packages/topology/locales'), to: 'locales' },
@@ -323,15 +322,7 @@ const config: Configuration = {
       ],
     }),
     extractCSS,
-    ...(REACT_REFRESH
-      ? [
-          new ReactRefreshWebpackPlugin({
-            overlay: {
-              sockPort: WDS_PORT,
-            },
-          }),
-        ]
-      : []),
+    ...(REACT_REFRESH ? [new ReactRefreshWebpackPlugin()] : []),
   ],
   devtool: 'cheap-module-source-map',
   stats: 'minimal',
@@ -340,7 +331,6 @@ const config: Configuration = {
 if (CHECK_CYCLES === 'true') {
   new CircularDependencyPreset({
     exclude: /node_modules|public\/dist|\.(gql|html)$/,
-    thresholds: { totalCycles: 14 }, // TODO(CONSOLE-4806): Set threshold to 0
     reportFile: '.webpack-cycles',
   }).apply(config.plugins);
 }

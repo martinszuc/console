@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { DocumentTitle } from '@console/shared/src/components/document-title/DocumentTitle';
-import * as _ from 'lodash-es';
+import * as _ from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom-v5-compat';
 import { ActionGroup, Button } from '@patternfly/react-core';
@@ -221,26 +221,24 @@ export const AddKeystonePage = () => {
             value={caFileContent}
             onChange={(c: string) => setCaFileContent(c)}
           />
-          <div className="form-group">
+          <div className="pf-v6-c-form" style={{ display: 'contents' }}>
             <DroppableFileInput
               onChange={(c: string) => setCertFileContent(c)}
               inputFileData={certFileContent}
               id="cert-file-input"
               label={t('public~Certificate')}
-              hideContents
-              inputFieldHelpText={t(
+              filenamePlaceholder={t('public~PEM-encoded TLS client certificate file')}
+              textareaFieldHelpText={t(
                 'public~PEM-encoded TLS client certificate to present when connecting to the server.',
               )}
             />
-          </div>
-          <div className="form-group">
             <DroppableFileInput
               onChange={(c: string) => setKeyFileContent(c)}
               inputFileData={keyFileContent}
               id="key-file-input"
               label={t('public~Key')}
-              hideContents
-              inputFieldHelpText={t(
+              filenamePlaceholder={t('public~PEM-encoded TLS private key file')}
+              textareaFieldHelpText={t(
                 'public~PEM-encoded TLS private key for the client certificate. Required if certificate is specified.',
               )}
             />

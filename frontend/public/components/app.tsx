@@ -1,9 +1,11 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import * as _ from 'lodash-es';
+import * as _ from 'lodash';
 import { useState, useRef, useCallback, useEffect, useLayoutEffect, memo, Suspense } from 'react';
+import type { FC, Provider as ProviderComponent, ReactNode } from 'react';
 import { render } from 'react-dom';
 import { Helmet, HelmetProvider } from 'react-helmet-async';
 import { linkify } from 'react-linkify';
+import * as Modal from 'react-modal';
 import { Provider, useSelector, useDispatch } from 'react-redux';
 import { Router } from 'react-router-dom';
 import { useParams, useLocation, CompatRouter, Routes, Route } from 'react-router-dom-v5-compat';
@@ -20,7 +22,7 @@ import { NotificationDrawer } from './notification-drawer';
 import { Navigation } from '@console/app/src/components/nav';
 import { history } from './utils/router';
 import { AsyncComponent } from './utils/async';
-import { LoadingBox } from './utils/status-box';
+import { LoadingBox } from '@console/shared/src/components/loading/LoadingBox';
 import * as UIActions from '../actions/ui';
 import { fetchSwagger, getCachedResources } from '../module/k8s';
 import { receivedResources, startAPIDiscovery } from '../actions/k8s';
@@ -30,7 +32,7 @@ import CloudShellDrawer from '@console/webterminal-plugin/src/components/cloud-s
 import DetectPerspective from '@console/app/src/components/detect-perspective/DetectPerspective';
 import DetectNamespace from '@console/app/src/components/detect-namespace/DetectNamespace';
 import DetectLanguage from '@console/app/src/components/detect-language/DetectLanguage';
-import FeatureFlagExtensionLoader from '@console/app/src/components/flags/FeatureFlagExtensionLoader';
+import { FeatureFlagExtensionLoader } from '@console/app/src/components/flags/FeatureFlagExtensionLoader';
 import { useExtensions } from '@console/plugin-sdk/src/api/useExtensions';
 import {
   useResolvedExtensions,
@@ -46,7 +48,7 @@ import {
 } from '@console/dynamic-plugin-sdk';
 import { initConsolePlugins } from '@console/dynamic-plugin-sdk/src/runtime/plugin-init';
 import { GuidedTour } from '@console/app/src/components/tour';
-import QuickStartDrawer from '@console/app/src/components/quick-starts/QuickStartDrawerAsync';
+import { QuickStartDrawer } from '@console/app/src/components/quick-starts/QuickStartDrawer';
 import { ModalProvider } from '@console/dynamic-plugin-sdk/src/app/modal-support/ModalProvider';
 import { OverlayProvider } from '@console/dynamic-plugin-sdk/src/app/modal-support/OverlayProvider';
 import ToastProvider from '@console/shared/src/components/toast/ToastProvider';
@@ -74,6 +76,7 @@ import { AdmissionWebhookWarningNotifications } from '@console/app/src/component
 import { usePackageManifestCheck } from '@console/shared/src/hooks/usePackageManifestCheck';
 import { useCSPViolationDetector } from '@console/app/src/hooks/useCSPViolationDetector';
 import { useNotificationPoller } from '@console/app/src/hooks/useNotificationPoller';
+import { useImpersonateRefreshFeatures } from './useImpersonateRefreshFeatures';
 
 initI18n();
 
@@ -81,16 +84,16 @@ initI18n();
 // Only linkify url strings beginning with a proper protocol scheme.
 linkify.set({ fuzzyLink: false });
 
-const EnhancedProvider: React.FC<{
-  provider: React.Provider<any>;
+const EnhancedProvider: FC<{
+  provider: ProviderComponent<any>;
   useValueHook: () => any;
-  children: React.ReactNode;
+  children: ReactNode;
 }> = ({ provider: Component, useValueHook, children }) => {
   const value = useValueHook();
   return <Component value={value}>{children}</Component>;
 };
 
-const App: React.FC<{
+const App: FC<{
   contextProviderExtensions: ResolvedExtension<ContextProvider>[];
 }> = ({ contextProviderExtensions }) => {
   const { t } = useTranslation();
@@ -134,6 +137,14 @@ const App: React.FC<{
   useCSPViolationDetector();
   useNotificationPoller();
 
+  // Initialize react-modal app element for accessibility
+  useLayoutEffect(() => {
+    const appElement = document.getElementById('app-content');
+    if (appElement) {
+      Modal.setAppElement(appElement);
+    }
+  }, []);
+
   useEffect(() => {
     window.addEventListener('resize', onResize);
     return () => {
@@ -155,6 +166,10 @@ const App: React.FC<{
   }, [location, params, prevLocation, prevParams]);
 
   const dispatch = useDispatch();
+
+  // Handle feature refresh after impersonation changes
+  useImpersonateRefreshFeatures();
+
   const [, , errorMessage] = usePackageManifestCheck(
     'lightspeed-operator',
     'openshift-marketplace',
@@ -167,6 +182,9 @@ const App: React.FC<{
     const gettingStartedBannerCapability = window.SERVER_FLAGS.capabilities?.find(
       (capability) => capability.name === 'GettingStartedBanner',
     );
+    const guidedTourCapability = window.SERVER_FLAGS.capabilities?.find(
+      (capability) => capability.name === 'GuidedTour',
+    );
     dispatch(
       setFlag(
         FLAGS.CONSOLE_CAPABILITY_LIGHTSPEEDBUTTON_IS_ENABLED,
@@ -177,6 +195,12 @@ const App: React.FC<{
       setFlag(
         FLAGS.CONSOLE_CAPABILITY_GETTINGSTARTEDBANNER_IS_ENABLED,
         gettingStartedBannerCapability?.visibility?.state === 'Enabled',
+      ),
+    );
+    dispatch(
+      setFlag(
+        FLAGS.CONSOLE_CAPABILITY_GUIDEDTOUR_IS_ENABLED,
+        guidedTourCapability?.visibility?.state === 'Enabled',
       ),
     );
     dispatch(setFlag(FLAGS.LIGHTSPEED_IS_AVAILABLE_TO_INSTALL, errorMessage === ''));
@@ -293,14 +317,16 @@ const App: React.FC<{
       <DetectNamespace>
         <ModalProvider>
           <OverlayProvider>
-            {contextProviderExtensions.reduce(
-              (children, e) => (
-                <EnhancedProvider key={e.uid} {...e.properties}>
-                  {children}
-                </EnhancedProvider>
-              ),
-              content,
-            )}
+            <Suspense fallback={<LoadingBox blame="contextProviderExtensions suspense" />}>
+              {contextProviderExtensions.reduce(
+                (children, e) => (
+                  <EnhancedProvider key={e.uid} {...e.properties}>
+                    {children}
+                  </EnhancedProvider>
+                ),
+                content,
+              )}
+            </Suspense>
           </OverlayProvider>
         </ModalProvider>
       </DetectNamespace>
@@ -309,7 +335,7 @@ const App: React.FC<{
   );
 };
 
-const AppWithExtensions: React.FC = () => {
+const AppWithExtensions: FC = () => {
   const [reduxReducerExtensions, reducersResolved] = useResolvedExtensions<ReduxReducer>(
     isReduxReducer,
   );
@@ -322,12 +348,12 @@ const AppWithExtensions: React.FC = () => {
     return <App contextProviderExtensions={contextProviderExtensions} />;
   }
 
-  return <LoadingBox />;
+  return <LoadingBox blame="AppWithExtensions" />;
 };
 
-render(<LoadingBox />, document.getElementById('app'));
+render(<LoadingBox blame="Init" />, document.getElementById('app'));
 
-const AppRouter: React.FC = () => {
+const AppRouter: FC = () => {
   const standaloneRouteExtensions = useExtensions(isStandaloneRoutePage);
   // Treat the authentication error page as a standalone route. There is no need to render the rest
   // of the app if we know authentication has failed.
@@ -453,6 +479,11 @@ graphQLReady.onReady(() => {
   // Used by GUI tests to check for unhandled exceptions
   window.windowError = null;
   window.onerror = (message, source, lineno, colno, error) => {
+    // ResizeObserver loop errors are non-actionable and can be ignored
+    if (typeof message === 'string' && message.includes('ResizeObserver loop')) {
+      return undefined;
+    }
+
     const formattedStack = error?.stack?.replace(/\\n/g, '\n');
     const formattedMessage = `unhandled error: ${message} ${formattedStack || ''}`;
     window.windowError = `${window.windowError ?? ''};${formattedMessage}`;
@@ -497,7 +528,7 @@ graphQLReady.onReady(() => {
   }
 
   render(
-    <Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox blame="Root suspense" />}>
       <Provider store={store}>
         <ThemeProvider>
           <HelmetProvider>

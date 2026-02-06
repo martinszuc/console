@@ -1,9 +1,10 @@
-import * as React from 'react';
+import type { ReactElement } from 'react';
+import { createElement, useMemo, useEffect, useState } from 'react';
 import { ChartLabel } from '@patternfly/react-charts/victory';
 import { css } from '@patternfly/react-styles';
 import i18next, { TFunction } from 'i18next';
 import * as _ from 'lodash';
-import { ImpersonateKind, useSafetyFirst } from '@console/dynamic-plugin-sdk';
+import type { ImpersonateKind } from '@console/dynamic-plugin-sdk';
 import { DaemonSetModel, PodModel, JobModel, CronJobModel } from '@console/internal/models';
 import {
   K8sResourceKind,
@@ -21,7 +22,7 @@ import './pod-ring-text.scss';
 type PodRingLabelType = {
   subTitle: string;
   title: string;
-  titleComponent: React.ReactElement;
+  titleComponent: ReactElement;
 };
 
 type PodRingLabelData = {
@@ -105,7 +106,7 @@ const getTitleComponent = (
     'pod-ring__center-text': !reversed,
     'pod-ring__long-text': longTitle,
   });
-  return React.createElement(ChartLabel, {
+  return createElement(ChartLabel, {
     dy: longSubtitle ? -5 : 0,
     style: { lineHeight: '11px' },
     className: labelClasses,
@@ -219,7 +220,7 @@ export const usePodRingLabel = (
     : podRingLabel(obj, ownerKind, pods, t);
   const { title, subTitle, longTitle, longSubtitle, reversed } = podRingLabelData;
 
-  return React.useMemo(
+  return useMemo(
     () => ({
       title,
       subTitle,
@@ -239,9 +240,9 @@ export const usePodScalingAccessStatus = (
   const isKnativeRevision = obj.kind === 'Revision';
   const isPod = obj.kind === 'Pod';
   const isScalingAllowed = !isKnativeRevision && !isPod && enableScaling;
-  const [editable, setEditable] = useSafetyFirst(false);
+  const [editable, setEditable] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (isScalingAllowed) {
       checkPodEditAccess(obj, resourceKind, impersonate, 'scale')
         .then((resp: SelfSubjectAccessReviewKind) =>

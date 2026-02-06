@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react';
-import { WatchK8sResource, WatchK8sResult, useSafetyFirst } from '@console/dynamic-plugin-sdk';
+import { useEffect, useMemo, useState } from 'react';
+import { WatchK8sResource, WatchK8sResult } from '@console/dynamic-plugin-sdk';
 import { useAccessReview2 } from '@console/internal/components/utils';
 import { useK8sWatchResource } from '@console/internal/components/utils/k8s-watch-hook';
 import { ProjectModel } from '@console/internal/models';
@@ -29,9 +29,9 @@ const useCloudShellWorkspace = (
   workspaceModel: K8sKind,
   defaultNamespace: string = null,
 ): WatchK8sResult<CloudShellResource> => {
-  const [namespace, setNamespace] = useSafetyFirst(defaultNamespace);
-  const [searching, setSearching] = useSafetyFirst<boolean>(false);
-  const [noNamespaceFound, setNoNamespaceFound] = useSafetyFirst<boolean>(false);
+  const [namespace, setNamespace] = useState(defaultNamespace);
+  const [searching, setSearching] = useState<boolean>(false);
+  const [noNamespaceFound, setNoNamespaceFound] = useState<boolean>(false);
 
   // sync defaultNamespace to namespace
   useEffect(() => {

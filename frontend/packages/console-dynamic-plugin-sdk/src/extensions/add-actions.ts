@@ -1,11 +1,11 @@
-import * as React from 'react';
-import { Extension, ExtensionDeclaration, CodeRef } from '../types';
+import type { ReactNode } from 'react';
+import { Extension, CodeRef } from '../types';
 import { AccessReviewResourceAttributes } from './console-types';
 
 /** This extension allows plugins to contribute an add action item to the add page of developer perspective.
     For example, a Serverless plugin can add a new action item for adding serverless functions
     to the add page of developer console. */
-export type AddAction = ExtensionDeclaration<
+export type AddAction = Extension<
   'dev-console.add/action',
   {
     /** ID used to identify the action. */
@@ -21,7 +21,7 @@ export type AddAction = ExtensionDeclaration<
     /** A callback that performs an action on click */
     callback?: CodeRef<(props: Record<string, any>) => void>;
     /** The perspective display icon. If possible, use a PatternFly icon for consistent icon colours and styling. */
-    icon?: CodeRef<React.ReactNode>;
+    icon?: CodeRef<ReactNode>;
     /** Optional access review to control visibility / enablement of the action. */
     accessReview?: AccessReviewResourceAttributes[];
   }
@@ -30,7 +30,7 @@ export type AddAction = ExtensionDeclaration<
 /** This extension allows plugins to contibute a group in the add page of developer console.
     Groups can be referenced by actions, which will be grouped together in the add action page based on their extension definition.
     For example, a Serverless plugin can contribute a Serverless group and together with multiple add actions. */
-export type AddActionGroup = ExtensionDeclaration<
+export type AddActionGroup = Extension<
   'dev-console.add/action-group',
   {
     /** ID used to identify the action group. */
@@ -42,7 +42,7 @@ export type AddActionGroup = ExtensionDeclaration<
     /** ID of action group after which this group should be placed */
     insertAfter?: string;
     /** The perspective display icon. */
-    icon?: CodeRef<React.ReactNode> | string;
+    icon?: CodeRef<ReactNode> | string;
   }
 >;
 

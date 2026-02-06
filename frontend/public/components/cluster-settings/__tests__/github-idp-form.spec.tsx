@@ -1,4 +1,4 @@
-import { cleanup, screen } from '@testing-library/react';
+import { cleanup, screen, act } from '@testing-library/react';
 import { AddGitHubPage } from '../../cluster-settings/github-idp-form';
 import {
   verifyIDPAddAndCancelButtons,
@@ -18,8 +18,10 @@ describe('Add Identity Provider: GitHub', () => {
     setupFileReaderMock();
   });
 
-  beforeEach(() => {
-    renderWithProviders(<AddGitHubPage />);
+  beforeEach(async () => {
+    await act(async () => {
+      renderWithProviders(<AddGitHubPage />);
+    });
   });
 
   afterEach(() => {
@@ -73,10 +75,9 @@ describe('Add Identity Provider: GitHub', () => {
     });
   });
 
-  it('should render the CA file label and elements, and verify upload file selection', () => {
-    verifyIDPFileFields({
+  it('should render the CA file label and elements, and verify upload file selection', async () => {
+    await verifyIDPFileFields({
       inputLabel: 'CA file',
-      idPrefix: 'ca-file-input',
       fileName: 'ca-certificate.pem',
       fileContent: 'test certificate content',
     });

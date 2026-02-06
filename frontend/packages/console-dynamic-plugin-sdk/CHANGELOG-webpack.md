@@ -10,6 +10,20 @@ For current development version of Console, use `4.x.0-prerelease.n` packages.
 For older 1.x plugin SDK packages, refer to "OpenShift Console Versions vs SDK Versions" compatibility
 table in [Console dynamic plugins README](./README.md).
 
+## 4.22.0-prerelease.1 - 2025-01-21
+
+- **Breaking**: Minimum compatible version of `webpack` increased to `^5.100.0` ([CONSOLE-3769], [#15945])
+- **Breaking**: Minimum compatible version of `typescript` increased to `^5.9.3` ([CONSOLE-3769], [#15945])
+- `webpack` is now a required peer dependency ([CONSOLE-5050], [#15934])
+
+## 4.21.0-prerelease.1 - 2025-12-04
+
+- Remove usage of direct `webpack` imports in favor of `compiler.webpack` ([OCPBUGS-66345], [#15802])
+
+## 4.20.0 - 2025-11-24
+
+> Initial release for OCP Console 4.20.
+
 ## 4.20.0-prerelease.1 - 2025-08-15
 
 - Add support for optional plugin dependencies ([CONSOLE-4623], [#15183])
@@ -79,10 +93,12 @@ table in [Console dynamic plugins README](./README.md).
 - Optimize module federation of PatternFly packages via dynamic modules ([CONSOLE-3853], [#13521])
 
 [CONSOLE-3705]: https://issues.redhat.com/browse/CONSOLE-3705
+[CONSOLE-3769]: https://issues.redhat.com/browse/CONSOLE-3769
 [CONSOLE-3853]: https://issues.redhat.com/browse/CONSOLE-3853
 [CONSOLE-4379]: https://issues.redhat.com/browse/CONSOLE-4379
 [CONSOLE-4400]: https://issues.redhat.com/browse/CONSOLE-4400
 [CONSOLE-4623]: https://issues.redhat.com/browse/CONSOLE-4623
+[CONSOLE-5050]: https://issues.redhat.com/browse/CONSOLE-5050
 [OCPBUGS-30762]: https://issues.redhat.com/browse/OCPBUGS-30762
 [OCPBUGS-30824]: https://issues.redhat.com/browse/OCPBUGS-30824
 [OCPBUGS-31901]: https://issues.redhat.com/browse/OCPBUGS-31901
@@ -94,6 +110,7 @@ table in [Console dynamic plugins README](./README.md).
 [OCPBUGS-53030]: https://issues.redhat.com/browse/OCPBUGS-53030
 [OCPBUGS-55323]: https://issues.redhat.com/browse/OCPBUGS-55323
 [OCPBUGS-61569]: https://issues.redhat.com/browse/OCPBUGS-61569
+[OCPBUGS-66345]: https://issues.redhat.com/browse/OCPBUGS-66345
 [#13188]: https://github.com/openshift/console/pull/13188
 [#13388]: https://github.com/openshift/console/pull/13388
 [#13521]: https://github.com/openshift/console/pull/13521
@@ -111,3 +128,6 @@ table in [Console dynamic plugins README](./README.md).
 [#14993]: https://github.com/openshift/console/pull/14993
 [#15183]: https://github.com/openshift/console/pull/15183
 [#15479]: https://github.com/openshift/console/pull/15479
+[#15802]: https://github.com/openshift/console/pull/15802
+[#15945]: https://github.com/openshift/console/pull/15945
+[#15934]: https://github.com/openshift/console/pull/15934

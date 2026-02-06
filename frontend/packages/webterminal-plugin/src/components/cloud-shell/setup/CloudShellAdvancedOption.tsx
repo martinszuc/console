@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC } from 'react';
+import { useState } from 'react';
 import { FormSection } from '@patternfly/react-core';
 import { Trans, useTranslation } from 'react-i18next';
 import { ProgressiveList, ProgressiveListItem } from '@console/shared/src';
@@ -17,10 +18,10 @@ const Footer = ({ children }) => {
   );
 };
 
-const List: React.FCC = () => {
+const List: FC = () => {
   const { t } = useTranslation();
 
-  const [visibleItems, setVisibleItems] = React.useState([]);
+  const [visibleItems, setVisibleItems] = useState([]);
   const handleVisibleItemChange = (item: string) => {
     setVisibleItems([...visibleItems, item]);
   };
@@ -41,7 +42,7 @@ const List: React.FCC = () => {
   );
 };
 
-const CloudShellAdvancedSection: React.FCC = () => {
+const CloudShellAdvancedSection: FC = () => {
   return (
     <FormSection style={{ marginTop: 'var(--pf-t--global--spacer--md)' }}>
       <div>

@@ -1,5 +1,5 @@
-import * as React from 'react';
-import type { ReactNode } from 'react';
+import type { FC, ReactNode } from 'react';
+import { createContext, useState, useCallback, useEffect } from 'react';
 import { useUserSettings } from '@console/shared/src/hooks/useUserSettings';
 
 export const THEME_USER_SETTING_KEY = 'console.theme';
@@ -43,13 +43,13 @@ export const updateThemeClass = (htmlTagElement: HTMLElement, theme: string): PR
   ) as PROCESSED_THEME;
 };
 
-export const ThemeContext = React.createContext<PROCESSED_THEME>(undefined);
+export const ThemeContext = createContext<PROCESSED_THEME>(undefined);
 
 interface ThemeProviderProps {
   children?: ReactNode;
 }
 
-export const ThemeProvider: React.FCC<ThemeProviderProps> = ({ children }) => {
+export const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
   const htmlTagElement = document.documentElement;
   const localTheme = localStorage.getItem(THEME_LOCAL_STORAGE_KEY) as PROCESSED_THEME;
   const [theme, , themeLoaded] = useUserSettings(
@@ -57,9 +57,9 @@ export const ThemeProvider: React.FCC<ThemeProviderProps> = ({ children }) => {
     THEME_SYSTEM_DEFAULT,
     true,
   );
-  const [processedTheme, setProcessedTheme] = React.useState<PROCESSED_THEME>(localTheme);
+  const [processedTheme, setProcessedTheme] = useState<PROCESSED_THEME>(localTheme);
 
-  const mqListener = React.useCallback(
+  const mqListener = useCallback(
     (e) => {
       if (e.matches) {
         htmlTagElement?.classList.add(THEME_DARK_CLASS);
@@ -74,7 +74,7 @@ export const ThemeProvider: React.FCC<ThemeProviderProps> = ({ children }) => {
     [htmlTagElement],
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (theme === THEME_SYSTEM_DEFAULT) {
       darkThemeMq.addEventListener('change', mqListener);
     }
@@ -84,7 +84,7 @@ export const ThemeProvider: React.FCC<ThemeProviderProps> = ({ children }) => {
     return () => darkThemeMq.removeEventListener('change', mqListener);
   }, [htmlTagElement, mqListener, theme, themeLoaded]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     themeLoaded && localStorage.setItem(THEME_LOCAL_STORAGE_KEY, theme);
   }, [theme, themeLoaded]);
 

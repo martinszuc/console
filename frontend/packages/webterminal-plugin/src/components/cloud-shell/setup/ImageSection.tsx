@@ -1,9 +1,9 @@
-import * as React from 'react';
+import type { FC } from 'react';
 import { FormSection, TextInputTypes } from '@patternfly/react-core';
 import { useTranslation } from 'react-i18next';
 import { InputField } from '@console/shared';
 
-const ImageSection: React.FCC = () => {
+const ImageSection: FC = () => {
   const { t } = useTranslation();
 
   return (

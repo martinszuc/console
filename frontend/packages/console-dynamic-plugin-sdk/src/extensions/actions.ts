@@ -1,11 +1,11 @@
-import * as React from 'react';
+import type { ReactNode } from 'react';
 import { ExtensionHook, ExtensionK8sKindVersionModel } from '../api/common-types';
 import { ActionContext } from '../api/internal-types';
-import { Extension, ExtensionDeclaration, CodeRef } from '../types';
+import { Extension, CodeRef } from '../types';
 import { AccessReviewResourceAttributes } from './console-types';
 
 /** ActionProvider contributes a hook that returns list of actions for specific context */
-export type ActionProvider = ExtensionDeclaration<
+export type ActionProvider = Extension<
   'console.action/provider',
   {
     /** The context ID helps to narrow the scope of contributed actions to a particular area of the application. Ex - topology, helm */
@@ -18,7 +18,7 @@ export type ActionProvider = ExtensionDeclaration<
 >;
 
 /** ResourceActionProvider contributes a hook that returns list of actions for specific resource model */
-export type ResourceActionProvider = ExtensionDeclaration<
+export type ResourceActionProvider = Extension<
   'console.action/resource-provider',
   {
     /** The model for which this provider provides actions for. */
@@ -29,7 +29,7 @@ export type ResourceActionProvider = ExtensionDeclaration<
 >;
 
 /** ActionGroup contributes an action group that can also be a submenu */
-export type ActionGroup = ExtensionDeclaration<
+export type ActionGroup = Extension<
   'console.action/group',
   {
     /** ID used to identify the action section. */
@@ -53,7 +53,7 @@ export type ActionGroup = ExtensionDeclaration<
 >;
 
 /** ActionFilter can be used to filter an action */
-export type ActionFilter = ExtensionDeclaration<
+export type ActionFilter = Extension<
   'console.action/filter',
   {
     /** The context ID helps to narrow the scope of contributed actions to a particular area of the application. Ex - topology, helm */
@@ -96,7 +96,7 @@ export type Action = {
   /** A unique identifier for this action. */
   id: string;
   /** The label to display in the UI. */
-  label: React.ReactNode;
+  label: ReactNode;
   /** Subtext for the menu item */
   description?: string;
   /** Executable callback or href.
@@ -110,7 +110,7 @@ export type Action = {
   /** The disabled tooltip for this action. */
   disabledTooltip?: string;
   /** The icon for this action. */
-  icon?: string | React.ReactNode;
+  icon?: string | ReactNode;
   /** A `/` separated string where each segment denotes
    * Eg. `add-to-project`, `menu-1/menu-2`
    * */
@@ -149,5 +149,5 @@ export enum MenuOptionType {
 
 export type ActionServiceProviderProps = {
   context: ActionContext;
-  children: (service: ActionService) => React.ReactNode;
+  children: (service: ActionService) => ReactNode;
 };

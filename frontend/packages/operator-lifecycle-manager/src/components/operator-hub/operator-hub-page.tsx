@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC } from 'react';
+import { useMemo } from 'react';
 import * as _ from 'lodash';
 import { Trans, useTranslation } from 'react-i18next';
 import { useParams, Link } from 'react-router-dom-v5-compat';
@@ -79,20 +80,22 @@ const OperatorHubEmptyState = () => {
     />,
   ];
   return (
-    <ConsoleEmptyState title={t('No OperatorHub items found')} primaryActions={actions}>
-      {t('Check that the OperatorHub is running and that you have created a valid CatalogSource.')}
+    <ConsoleEmptyState title={t('No Software Catalog items found')} primaryActions={actions}>
+      {t(
+        'Check that the Software Catalog is running and that you have created a valid CatalogSource.',
+      )}
     </ConsoleEmptyState>
   );
 };
 
-export const OperatorHubList: React.FC<OperatorHubListProps> = ({
+export const OperatorHubList: FC<OperatorHubListProps> = ({
   loaded,
   loadError,
   namespace,
   ...props
 }) => {
   const { t } = useTranslation();
-  const items: OperatorHubItem[] = React.useMemo(() => {
+  const items: OperatorHubItem[] = useMemo(() => {
     if (!loaded || loadError) {
       return [];
     }

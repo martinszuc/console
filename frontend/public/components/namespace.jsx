@@ -1,7 +1,6 @@
 /* eslint-disable tsdoc/syntax */
-import * as React from 'react';
-import * as _ from 'lodash-es';
-import { useEffect, useMemo, useState, useCallback } from 'react';
+import { Suspense, useEffect, useMemo, useState, useCallback } from 'react';
+import * as _ from 'lodash';
 import { DocumentTitle } from '@console/shared/src/components/document-title/DocumentTitle';
 import { css } from '@patternfly/react-styles';
 import {
@@ -11,7 +10,6 @@ import {
   DescriptionListDescription,
   DescriptionListGroup,
   DescriptionListTerm,
-  Tooltip,
   Grid,
   GridItem,
 } from '@patternfly/react-core';
@@ -43,6 +41,7 @@ import { DASH } from '@console/shared/src/constants/ui';
 import { ByteDataTypes } from '@console/shared/src/graph-helper/data-utils';
 import * as k8sActions from '@console/dynamic-plugin-sdk/src/app/k8s/actions/k8s';
 import { useActivePerspective } from '@console/dynamic-plugin-sdk';
+import { useOverlay } from '@console/dynamic-plugin-sdk/src/app/modal-support/useOverlay';
 import PaneBody from '@console/shared/src/components/layout/PaneBody';
 import {
   ConsoleLinkModel,
@@ -58,7 +57,6 @@ import { DetailsPage, ListPage, sorts } from './factory';
 import { sortResourceByValue } from './factory/Table/sort';
 import { ExternalLink } from '@console/shared/src/components/links/ExternalLink';
 import { DetailsItem } from './utils/details-item';
-import { Kebab, ResourceKebab } from './utils/kebab';
 import { LabelList } from './utils/label-list';
 import { LoadingInline, LoadingBox } from './utils/status-box';
 import { ResourceIcon } from './utils/resource-icon';
@@ -74,7 +72,7 @@ import {
 import { navFactory } from './utils/horizontal-nav';
 import { useAccessReview } from './utils/rbac';
 import { Timestamp } from '@console/shared/src/components/datetime/Timestamp';
-import { deleteNamespaceModal, configureNamespacePullSecretModal } from './modals';
+import { LazyConfigureNamespacePullSecretModalOverlay } from './modals';
 import { RoleBindingsPage } from './RBAC';
 import { Bar } from './graphs/bar';
 import { Area } from './graphs/area';
@@ -104,6 +102,8 @@ import {
 } from '@console/app/src/components/data-view/ConsoleDataView';
 import { DataViewCheckboxFilter } from '@patternfly/react-data-view';
 import { getGroupVersionKindForModel } from '@console/dynamic-plugin-sdk/src/utils/k8s/k8s-ref';
+import LazyActionMenu from '@console/shared/src/components/actions/LazyActionMenu';
+import { ActionMenuVariant } from '@console/shared/src/components/actions/types';
 
 const getDisplayName = (obj) =>
   _.get(obj, ['metadata', 'annotations', 'openshift.io/display-name']);
@@ -132,38 +132,6 @@ const getFilters = () => [
       { id: REQUESTER_FILTER.SYSTEM, title: i18next.t('public~System'), hideIfEmpty: true },
     ],
   },
-];
-
-export const deleteModal = (kind, ns) => {
-  const { labelKey, labelKind, weight, accessReview } = Kebab.factory.Delete(kind, ns);
-  let callback = undefined;
-  let tooltip;
-  let label;
-
-  if (ns.metadata.name === 'default') {
-    tooltip = `${kind.label} default cannot be deleted`;
-  } else if (ns.status?.phase === 'Terminating') {
-    tooltip = `${kind.label} is already terminating`;
-  } else {
-    callback = () => deleteNamespaceModal({ kind, resource: ns });
-  }
-  if (tooltip) {
-    label = (
-      <div className="dropdown__disabled">
-        <Tooltip content={tooltip}>
-          <span>{i18next.t(labelKey, labelKind)}</span>
-        </Tooltip>
-      </div>
-    );
-  }
-  return { label, labelKey, labelKind, weight, callback, accessReview };
-};
-
-const nsMenuActions = [
-  Kebab.factory.ModifyLabels,
-  Kebab.factory.ModifyAnnotations,
-  Kebab.factory.Edit,
-  deleteModal,
 ];
 
 const fetchNamespaceMetrics = () => {
@@ -359,7 +327,7 @@ const getNamespaceDataViewRows = (rowData, tableColumns, namespaceMetrics, t) =>
         cell: <LabelList kind="Namespace" labels={labels} />,
       },
       [namespaceColumnInfo[9].id]: {
-        cell: <ResourceKebab actions={nsMenuActions} kind="Namespace" resource={ns} />,
+        cell: <LazyActionMenu context={{ [referenceForModel(NamespaceModel)]: ns }} />,
         props: actionsCellProps,
       },
     };
@@ -422,6 +390,8 @@ export const NamespacesList = (props) => {
     [t],
   );
 
+  const initialFilters = useMemo(() => ({ ...initialFiltersDefault, requester: [] }), []);
+
   const additionalFilterNodes = useMemo(
     () => [
       <DataViewCheckboxFilter
@@ -457,21 +427,21 @@ export const NamespacesList = (props) => {
   }
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView
         {...props}
         label={NamespaceModel.labelPlural}
         columns={columns}
         columnLayout={columnLayout}
         columnManagementID={NamespacesColumnManagementID}
-        initialFilters={{ ...initialFiltersDefault, requester: [] }}
+        initialFilters={initialFilters}
         additionalFilterNodes={additionalFilterNodes}
         matchesAdditionalFilters={matchesAdditionalFilters}
         getDataViewRows={(rowData, tableColumns) =>
           getNamespaceDataViewRows(rowData, tableColumns, namespaceMetrics, t)
         }
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 
@@ -488,8 +458,6 @@ export const NamespacesPage = (props) => {
     />
   );
 };
-
-export const projectMenuActions = [Kebab.factory.Edit, deleteModal];
 
 const projectColumnManagementID = referenceForModel(ProjectModel);
 
@@ -671,7 +639,7 @@ const getProjectDataViewRows = (
         cell: <LabelList labels={labels} kind="Project" />,
       },
       [projectColumnInfo[9].id]: {
-        cell: <ResourceKebab actions={projectMenuActions} kind="Project" resource={project} />,
+        cell: <LazyActionMenu context={{ [referenceForModel(ProjectModel)]: project }} />,
         props: actionsCellProps,
       },
     };
@@ -735,7 +703,7 @@ export const ProjectsTable = (props) => {
   const columns = useProjectsColumns({ showMetrics: false, showActions: false });
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView
         {...props}
         label={ProjectModel.labelPlural}
@@ -745,7 +713,7 @@ export const ProjectsTable = (props) => {
         }
         hideColumnManagement
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 
@@ -761,7 +729,7 @@ export const ProjectList = (props) => {
   );
   const isPrometheusAvailable = usePrometheusGate();
   const showMetrics = isPrometheusAvailable && canGetNS;
-  const showActions = showMetrics;
+  const showActions = true;
   const columns = useProjectsColumns({ showMetrics, showActions });
   const namespaceMetrics = useSelector(({ UI }) => UI.getIn(['metrics', 'namespace']));
 
@@ -802,6 +770,8 @@ export const ProjectList = (props) => {
     [t],
   );
 
+  const initialFilters = useMemo(() => ({ ...initialFiltersDefault, requester: [] }), []);
+
   const additionalFilterNodes = useMemo(
     () => [
       <DataViewCheckboxFilter
@@ -839,14 +809,14 @@ export const ProjectList = (props) => {
   }
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView
         {...props}
         label={ProjectModel.labelPlural}
         columns={columns}
         columnLayout={columnLayout}
         columnManagementID={projectColumnManagementID}
-        initialFilters={{ ...initialFiltersDefault, requester: [] }}
+        initialFilters={initialFilters}
         additionalFilterNodes={additionalFilterNodes}
         matchesAdditionalFilters={matchesAdditionalFilters}
         getDataViewRows={(rowData, tableColumns) =>
@@ -854,7 +824,7 @@ export const ProjectList = (props) => {
         }
         NoDataEmptyMsg={OpenShiftGettingStarted}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 
@@ -880,13 +850,14 @@ export const ProjectsPage = (props) => {
   );
 };
 
-/** @type {React.FCC<{namespace: K8sResourceKind}>} */
+/** @type {FC<{namespace: K8sResourceKind}>} */
 export const PullSecret = (props) => {
   const [isLoading, setIsLoading] = useState(true);
   const [data, setData] = useState([]);
   const [error, setError] = useState(false);
   const { t } = useTranslation();
   const { namespace, canViewSecrets } = props;
+  const launchModal = useOverlay();
 
   useEffect(() => {
     k8sGet(ServiceAccountModel, 'default', namespace.metadata.name, {})
@@ -904,7 +875,11 @@ export const PullSecret = (props) => {
       });
   }, [namespace.metadata.name]);
 
-  const modal = () => configureNamespacePullSecretModal({ namespace, pullSecret: undefined });
+  const modal = () =>
+    launchModal(LazyConfigureNamespacePullSecretModalOverlay, {
+      namespace,
+      pullSecret: undefined,
+    });
 
   const secrets = () => {
     if (error) {
@@ -1125,7 +1100,13 @@ const RolesPage = ({ obj: { metadata } }) => {
 export const NamespacesDetailsPage = (props) => (
   <DetailsPage
     {...props}
-    menuActions={nsMenuActions}
+    kind={referenceForModel(NamespaceModel)}
+    customActionMenu={(k8sObj, obj) => (
+      <LazyActionMenu
+        context={{ [referenceForModel(NamespaceModel)]: obj }}
+        variant={ActionMenuVariant.DROPDOWN}
+      />
+    )}
     pages={[
       navFactory.details(NamespaceDetails),
       navFactory.editYaml(),
@@ -1138,7 +1119,13 @@ export const ProjectsDetailsPage = (props) => {
   return (
     <DetailsPage
       {...props}
-      menuActions={projectMenuActions}
+      kind={referenceForModel(ProjectModel)}
+      customActionMenu={(k8sObj, obj) => (
+        <LazyActionMenu
+          context={{ [referenceForModel(ProjectModel)]: obj }}
+          variant={ActionMenuVariant.DROPDOWN}
+        />
+      )}
       pages={[
         {
           href: '',

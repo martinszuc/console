@@ -1,12 +1,11 @@
 import { projectDropdown } from '@console/cypress-integration-tests/views/common';
-import { guidedTour } from '@console/cypress-integration-tests/views/guided-tour';
 import { checkErrors, testName } from '../../../integration-tests-cypress/support';
 import { nav } from '../../../integration-tests-cypress/views/nav';
 import { GlobalInstalledNamespace, operator, TestOperandProps } from '../views/operator.view';
 
 const testOperator = {
   name: 'Data Grid',
-  operatorHubCardTestID: 'operator-Data Grid',
+  operatorCardTestID: 'operator-Data Grid',
   installedNamespace: testName,
 };
 
@@ -21,7 +20,6 @@ const testOperand: TestOperandProps = {
 describe(`Installing "${testOperator.name}" operator in test namespace`, () => {
   before(() => {
     cy.login();
-    guidedTour.close();
     cy.createProjectWithCLI(testName);
   });
 
@@ -36,7 +34,7 @@ describe(`Installing "${testOperator.name}" operator in test namespace`, () => {
   it(`Installs ${testOperator.name} operator in test namespace and creates ${testOperand.name} operand instance`, () => {
     operator.install(
       testOperator.name,
-      testOperator.operatorHubCardTestID,
+      testOperator.operatorCardTestID,
       testOperator.installedNamespace,
     );
     operator.installedSucceeded(testOperator.name, testName);

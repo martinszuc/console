@@ -1,6 +1,7 @@
 import { css } from '@patternfly/react-styles';
 import * as Modal from 'react-modal';
-import * as React from 'react';
+import type { SyntheticEvent, FC, ReactNode, ReactElement, ComponentType } from 'react';
+import { useCallback } from 'react';
 import * as ReactDOM from 'react-dom';
 import { Provider } from 'react-redux';
 import { Router } from 'react-router-dom';
@@ -16,30 +17,27 @@ import { history } from '../utils/router';
 export const createModal: CreateModal = (getModalElement) => {
   const containerElement = document.getElementById('modal-container');
   const result = new Promise<void>((resolve) => {
-    const closeModal = (e?: React.SyntheticEvent) => {
+    const closeModal = (e?: SyntheticEvent) => {
       if (e && e.stopPropagation) {
         e.stopPropagation();
       }
       ReactDOM.unmountComponentAtNode(containerElement);
       resolve();
     };
-    Modal.setAppElement(document.getElementById('app-content'));
+    // Modal app element is now set globally in App component
     containerElement && ReactDOM.render(getModalElement(closeModal), containerElement);
   });
   return { result };
 };
 
 /** @deprecated Use PF modals instead */
-export const ModalWrapper: React.FC<ModalWrapperProps> = ({
-  blocking,
-  className,
-  children,
-  onClose,
-}) => {
+export const ModalWrapper: FC<ModalWrapperProps> = ({ blocking, className, children, onClose }) => {
   const { t } = useTranslation();
-  const parentSelector = React.useCallback(() => document.querySelector('#modal-container'), []);
+  const parentSelector = useCallback(() => document.querySelector('#modal-container'), []);
+  const appElement = document.getElementById('app-content');
   return (
     <Modal
+      appElement={appElement}
       className={css('modal-dialog', className)}
       contentLabel={t('public~Modal')}
       isOpen
@@ -62,11 +60,11 @@ export const createModalLauncher: CreateModalLauncher = (Component, modalWrapper
   ...props
 }) => {
   const getModalContainer: GetModalContainer = (onClose) => {
-    const handleClose = (e: React.SyntheticEvent) => {
+    const handleClose = (e: SyntheticEvent) => {
       onClose?.(e);
       close?.();
     };
-    const handleCancel = (e: React.SyntheticEvent) => {
+    const handleCancel = (e: SyntheticEvent) => {
       cancel?.();
       handleClose(e);
     };
@@ -91,7 +89,7 @@ export const createModalLauncher: CreateModalLauncher = (Component, modalWrapper
 };
 
 /** @deprecated Use PF modals instead */
-export const ModalTitle: React.FC<ModalTitleProps> = ({
+export const ModalTitle: FC<ModalTitleProps> = ({
   children,
   className = 'modal-header',
   close,
@@ -114,14 +112,14 @@ export const ModalTitle: React.FC<ModalTitleProps> = ({
 );
 
 /** @deprecated Use PF modals instead */
-export const ModalBody: React.FCC<ModalBodyProps> = ({ children }) => (
+export const ModalBody: FC<ModalBodyProps> = ({ children }) => (
   <div className="modal-body">
     <div className="modal-body-content">{children}</div>
   </div>
 );
 
 /** @deprecated Use PF modals instead */
-export const ModalFooter: React.FC<ModalFooterProps> = ({
+export const ModalFooter: FC<ModalFooterProps> = ({
   message,
   errorMessage,
   inProgress,
@@ -140,7 +138,7 @@ export const ModalFooter: React.FC<ModalFooterProps> = ({
 };
 
 /** @deprecated Use PF modals instead */
-export const ModalSubmitFooter: React.FC<ModalSubmitFooterProps> = ({
+export const ModalSubmitFooter: FC<ModalSubmitFooterProps> = ({
   message,
   errorMessage,
   inProgress,
@@ -231,13 +229,13 @@ export const ModalSubmitFooter: React.FC<ModalSubmitFooterProps> = ({
 
 export type ModalWrapperProps = {
   blocking?: boolean;
-  children?: React.ReactNode;
+  children?: ReactNode;
   className?: string;
-  onClose?: (event?: React.SyntheticEvent) => void;
+  onClose?: (event?: SyntheticEvent) => void;
 };
 
 /** @deprecated Use dynamic plugin sdk 'useModal' hook instead */
-export type GetModalContainer = (onClose: (e?: React.SyntheticEvent) => void) => React.ReactElement;
+export type GetModalContainer = (onClose: (e?: SyntheticEvent) => void) => ReactElement;
 
 type CreateModal = (getModalContainer: GetModalContainer) => { result: Promise<any> };
 
@@ -253,33 +251,33 @@ export type ModalComponentProps = {
 
 export type ModalTitleProps = {
   className?: string;
-  close?: (e: React.SyntheticEvent<any, Event>) => void;
-  children?: React.ReactNode;
+  close?: (e: SyntheticEvent<any, Event>) => void;
+  children?: ReactNode;
 };
 
 export type ModalBodyProps = {
   className?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
 export type ModalFooterProps = {
   message?: string;
-  errorMessage?: React.ReactNode;
+  errorMessage?: ReactNode;
   inProgress: boolean;
   className?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
 export type ModalSubmitFooterProps = {
   message?: string;
   errorMessage?: string;
   inProgress: boolean;
-  cancel: (e: React.SyntheticEvent<any, Event>) => void;
-  cancelText?: React.ReactNode;
+  cancel: (e: SyntheticEvent<any, Event>) => void;
+  cancelText?: ReactNode;
   className?: string;
-  resetText?: React.ReactNode;
-  reset?: (e: React.SyntheticEvent<any, Event>) => void;
-  submitText: React.ReactNode;
+  resetText?: ReactNode;
+  reset?: (e: SyntheticEvent<any, Event>) => void;
+  submitText: ReactNode;
   submitDisabled?: boolean;
   submitDanger?: boolean;
   buttonAlignment?: 'left' | 'right';
@@ -287,6 +285,6 @@ export type ModalSubmitFooterProps = {
 };
 
 export type CreateModalLauncher = <P extends ModalComponentProps>(
-  C: React.ComponentType<P>,
+  C: ComponentType<P>,
   modalWrapper?: boolean,
 ) => (props: P & CreateModalLauncherProps) => { result: Promise<{}> };

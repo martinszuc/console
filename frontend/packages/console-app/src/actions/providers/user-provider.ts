@@ -1,27 +1,27 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom-v5-compat';
 import { Action } from '@console/dynamic-plugin-sdk/src';
 import * as UIActions from '@console/internal/actions/ui';
 import { asAccessReview } from '@console/internal/components/utils';
 import { UserModel } from '@console/internal/models';
 import { referenceFor, UserKind } from '@console/internal/module/k8s';
+import { useConsoleDispatch } from '@console/shared/src/hooks/useConsoleDispatch';
 import { useK8sModel } from '@console/shared/src/hooks/useK8sModel';
 import { useCommonResourceActions } from '../hooks/useCommonResourceActions';
 
 const useImpersonateAction = (resource: UserKind): Action[] => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const dispatch = useDispatch();
+  const dispatch = useConsoleDispatch();
 
   const factory = useMemo(
     () => ({
       ImpersonateUser: () => ({
         id: 'impersonate-user',
-        label: t('public~Impersonate User {{name}}', resource.metadata),
+        label: t('public~Impersonate User {{name}}', { name: resource?.metadata?.name }),
         cta: () => {
-          dispatch(UIActions.startImpersonate('User', resource.metadata.name));
+          dispatch(UIActions.startImpersonate('User', resource?.metadata?.name));
           navigate(window.SERVER_FLAGS.basePath);
         },
         accessReview: asAccessReview(UserModel, resource, 'impersonate'),
@@ -30,7 +30,11 @@ const useImpersonateAction = (resource: UserKind): Action[] => {
     [dispatch, navigate, resource, t],
   );
 
-  const action = useMemo<Action[]>(() => [factory.ImpersonateUser()], [factory]);
+  // Guard against missing user name to prevent undefined values
+  const action = useMemo<Action[]>(
+    () => (resource?.metadata?.name ? [factory.ImpersonateUser()] : []),
+    [factory, resource?.metadata?.name],
+  );
   return action;
 };
 

@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC } from 'react';
+import { useMemo, Suspense } from 'react';
 import type { RowFilter } from '@console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import type { TFunction } from 'i18next';
@@ -40,7 +41,6 @@ import {
   actionsCellProps,
   cellIsStickyProps,
   getNameCellProps,
-  initialFiltersDefault,
   ConsoleDataView,
 } from '@console/app/src/components/data-view/ConsoleDataView';
 import { GetDataViewRows } from '@console/app/src/components/data-view/types';
@@ -86,12 +86,12 @@ const tableColumnInfo = [
   { id: 'actions' },
 ];
 
-const BooleanDisplay: React.FCC<{ value?: boolean }> = ({ value }) => {
+const BooleanDisplay: FC<{ value?: boolean }> = ({ value }) => {
   const { t } = useTranslation();
-  return value ? t('public~True') : t('public~False');
+  return <>{value ? t('public~True') : t('public~False')}</>;
 };
 
-const getDataViewRows: GetDataViewRows<CronJobKind, undefined> = (data, columns) => {
+const getDataViewRows: GetDataViewRows<CronJobKind> = (data, columns) => {
   return data.map(({ obj: cronjob }) => {
     const { name, namespace } = cronjob.metadata;
     const resourceKind = referenceFor(cronjob);
@@ -140,7 +140,7 @@ const getDataViewRows: GetDataViewRows<CronJobKind, undefined> = (data, columns)
   });
 };
 
-const CronJobDetails: React.FCC<CronJobDetailsProps> = ({ obj: cronjob }) => {
+const CronJobDetails: FC<CronJobDetailsProps> = ({ obj: cronjob }) => {
   const job = cronjob.spec.jobTemplate;
   const { t } = useTranslation();
   return (
@@ -239,9 +239,9 @@ const getPodsWatcher = (namespace: string) => {
   ];
 };
 
-export const CronJobPodsComponent: React.FCC<CronJobPodsComponentProps> = ({ obj }) => {
+export const CronJobPodsComponent: FC<CronJobPodsComponentProps> = ({ obj }) => {
   const { t } = useTranslation();
-  const podFilters = React.useMemo(() => getPodFilters(t), [t]);
+  const podFilters = useMemo(() => getPodFilters(t), [t]);
   return (
     <PaneBody>
       <Firehose resources={getPodsWatcher(obj.metadata.namespace)}>
@@ -281,7 +281,7 @@ export type CronJobJobsComponentProps = {
   obj: K8sResourceKind;
 };
 
-export const CronJobJobsComponent: React.FCC<CronJobJobsComponentProps> = ({ obj }) => (
+export const CronJobJobsComponent: FC<CronJobJobsComponentProps> = ({ obj }) => (
   <PaneBody>
     <Firehose resources={getJobsWatcher(obj.metadata.namespace)}>
       <ListPageWrapper
@@ -304,7 +304,7 @@ export const CronJobJobsComponent: React.FCC<CronJobJobsComponentProps> = ({ obj
 
 const useCronJobsColumns = (): TableColumn<CronJobKind>[] => {
   const { t } = useTranslation();
-  const columns: TableColumn<CronJobKind>[] = React.useMemo(() => {
+  const columns: TableColumn<CronJobKind>[] = useMemo(() => {
     return [
       {
         title: t('public~Name'),
@@ -367,26 +367,25 @@ const useCronJobsColumns = (): TableColumn<CronJobKind>[] => {
   return columns;
 };
 
-export const CronJobsList: React.FCC<CronJobsListProps> = ({ data, loaded, ...props }) => {
+export const CronJobsList: FC<CronJobsListProps> = ({ data, loaded, ...props }) => {
   const columns = useCronJobsColumns();
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView<CronJobKind>
         {...props}
         label={CronJobModel.labelPlural}
         data={data}
         loaded={loaded}
         columns={columns}
-        initialFilters={initialFiltersDefault}
         getDataViewRows={getDataViewRows}
         hideColumnManagement={true}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 
-export const CronJobsPage: React.FCC<CronJobsPageProps> = (props) => (
+export const CronJobsPage: FC<CronJobsPageProps> = (props) => (
   <ListPage
     {...props}
     ListComponent={CronJobsList}
@@ -396,7 +395,7 @@ export const CronJobsPage: React.FCC<CronJobsPageProps> = (props) => (
   />
 );
 
-export const CronJobsDetailsPage: React.FCC = (props) => {
+export const CronJobsDetailsPage: FC = (props) => {
   const customActionMenu = (kindObj, obj) => {
     const resourceKind = referenceForModel(kindObj);
     const context = { [resourceKind]: obj };

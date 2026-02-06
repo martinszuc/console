@@ -1,6 +1,6 @@
 import { Component } from 'react';
 import * as Immutable from 'immutable';
-import * as _ from 'lodash-es';
+import * as _ from 'lodash';
 
 import { setFlag } from '@console/internal/actions/flags';
 import { receivedResources } from '../../actions/k8s';
@@ -52,8 +52,10 @@ describe('featureReducer', () => {
         CONSOLE_QUICKSTART: undefined,
         CONSOLE_CAPABILITY_LIGHTSPEEDBUTTON_IS_ENABLED: undefined,
         CONSOLE_CAPABILITY_GETTINGSTARTEDBANNER_IS_ENABLED: undefined,
+        CONSOLE_CAPABILITY_GUIDEDTOUR_IS_ENABLED: undefined,
         LIGHTSPEED_IS_AVAILABLE_TO_INSTALL: undefined,
         DEVCONSOLE_PROXY: true,
+        VAC_PLATFORM_SUPPORT: undefined,
       }),
     );
   });

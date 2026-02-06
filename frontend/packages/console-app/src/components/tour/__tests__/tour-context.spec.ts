@@ -1,18 +1,37 @@
-import * as redux from 'react-redux';
-import * as useResolvedExtensions from '@console/dynamic-plugin-sdk/src/api/useResolvedExtensions';
-import * as userHooks from '@console/shared/src/hooks/useUserSettingsCompatibility';
-import { testHook } from '@console/shared/src/test-utils/hooks-utils';
+import { renderHook } from '@testing-library/react';
+import { useSelector } from 'react-redux';
+import { useResolvedExtensions } from '@console/dynamic-plugin-sdk/src/api/useResolvedExtensions';
+import { useUserSettingsCompatibility } from '@console/shared/src/hooks/useUserSettingsCompatibility';
 import { TourActions } from '../const';
-import * as TourModule from '../tour-context';
+import { tourReducer, useTourValuesForContext, useTourStateForPerspective } from '../tour-context';
 import { TourDataType } from '../type';
+
+jest.mock('react-redux', () => ({
+  ...jest.requireActual('react-redux'),
+  useSelector: jest.fn(),
+}));
+
+jest.mock('@console/dynamic-plugin-sdk/src/api/useResolvedExtensions', () => ({
+  useResolvedExtensions: jest.fn(),
+}));
+
+jest.mock('@console/shared/src/hooks/useUserSettingsCompatibility', () => ({
+  useUserSettingsCompatibility: jest.fn(),
+}));
 
 jest.mock('@console/dynamic-plugin-sdk/src/perspective/useActivePerspective', () => ({
   default: () => ['dev', jest.fn()],
 }));
 
-const { tourReducer, useTourValuesForContext, useTourStateForPerspective } = TourModule;
+const useSelectorMock = useSelector as jest.Mock;
+const useResolvedExtensionsMock = useResolvedExtensions as jest.Mock;
+const useUserSettingsCompatibilityMock = useUserSettingsCompatibility as jest.Mock;
 
 describe('guided-tour-context', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('tour-reducer', () => {
     let mockState;
     beforeEach(() => {
@@ -75,94 +94,77 @@ describe('guided-tour-context', () => {
     });
 
     it('should return context values from the hook', () => {
-      spyOn(redux, 'useSelector').and.returnValues(
-        { A: true, B: false },
-        {
-          A: true,
-          B: false,
-        },
-      );
-      spyOn(useResolvedExtensions, 'useResolvedExtensions').and.returnValue(mockTourExtension);
-      spyOn(TourModule, 'useTourStateForPerspective').and.returnValue([
-        { completed: false },
+      useSelectorMock
+        .mockReturnValueOnce({ A: true, B: false })
+        .mockReturnValueOnce({ A: true, B: false });
+      useResolvedExtensionsMock.mockReturnValue(mockTourExtension);
+      // Mock useUserSettingsCompatibility to return { completed: false } for the tour state
+      useUserSettingsCompatibilityMock.mockReturnValue([
+        { dev: { completed: false } },
         () => null,
         true,
       ]);
-      testHook(() => {
-        const contextValue = useTourValuesForContext();
-        const { tourState, tour, totalSteps } = contextValue;
-        expect(tourState).toEqual({
-          startTour: true,
-          completedTour: false,
-          stepNumber: 0,
-        });
-        expect(tour).toEqual({
-          ...mockTour,
-          steps: [{ flags: ['A'], heading: 'g', content: 'h' }],
-        });
-        expect(totalSteps).toEqual(1);
+      const { result } = renderHook(() => useTourValuesForContext());
+      const { tourState, tour, totalSteps } = result.current;
+      expect(tourState).toEqual({
+        startTour: true,
+        completedTour: false,
+        stepNumber: 0,
       });
+      expect(tour).toEqual({
+        ...mockTour,
+        steps: [{ flags: ['A'], heading: 'g', content: 'h' }],
+      });
+      expect(totalSteps).toEqual(1);
     });
 
     it('should return tour null from the hook', () => {
-      spyOn(redux, 'useSelector').and.returnValues(
-        { A: true, B: false },
-        {
-          A: true,
-          B: false,
-        },
-      );
-      spyOn(useResolvedExtensions, 'useResolvedExtensions').and.returnValue([[]]);
-      spyOn(TourModule, 'useTourStateForPerspective').and.returnValue([
-        { completed: false },
+      useSelectorMock
+        .mockReturnValueOnce({ A: true, B: false })
+        .mockReturnValueOnce({ A: true, B: false });
+      useResolvedExtensionsMock.mockReturnValue([[]]);
+      useUserSettingsCompatibilityMock.mockReturnValue([
+        { dev: { completed: false } },
         () => null,
         true,
       ]);
-      testHook(() => {
-        const contextValue = useTourValuesForContext();
-        const { tourState, tour, totalSteps } = contextValue;
-        expect(tourState).toEqual(undefined);
-        expect(tour).toEqual(null);
-        expect(totalSteps).toEqual(undefined);
-      });
+      const { result } = renderHook(() => useTourValuesForContext());
+      const { tourState, tour, totalSteps } = result.current;
+      expect(tourState).toEqual(undefined);
+      expect(tour).toEqual(null);
+      expect(totalSteps).toEqual(undefined);
     });
 
     it('should return null from the hook if tour is available but data isnot loaded', () => {
-      spyOn(redux, 'useSelector').and.returnValues(
-        { A: true, B: false },
-        {
-          A: true,
-          B: false,
-        },
-      );
-      spyOn(useResolvedExtensions, 'useResolvedExtensions').and.returnValue(mockTourExtension);
-      spyOn(TourModule, 'useTourStateForPerspective').and.returnValue([
-        { completed: false },
+      useSelectorMock
+        .mockReturnValueOnce({ A: true, B: false })
+        .mockReturnValueOnce({ A: true, B: false });
+      useResolvedExtensionsMock.mockReturnValue(mockTourExtension);
+      // Mock useUserSettingsCompatibility with loaded: false
+      useUserSettingsCompatibilityMock.mockReturnValue([
+        { dev: { completed: false } },
         () => null,
         false,
       ]);
-      testHook(() => {
-        const contextValue = useTourValuesForContext();
-        const { tourState, tour, totalSteps } = contextValue;
-        expect(tourState).toEqual(undefined);
-        expect(tour).toEqual(null);
-        expect(totalSteps).toEqual(undefined);
-      });
+      const { result } = renderHook(() => useTourValuesForContext());
+      const { tourState, tour, totalSteps } = result.current;
+      expect(tourState).toEqual(undefined);
+      expect(tour).toEqual(null);
+      expect(totalSteps).toEqual(undefined);
     });
   });
 
   describe('useTourStatePerspective', () => {
     it('should return data based on the perspective passed as prop', () => {
-      spyOn(userHooks, 'useUserSettingsCompatibility').and.returnValue([
+      useUserSettingsCompatibilityMock.mockReturnValue([
         { dev: { a: true }, admin: { a: false } },
         () => null,
         true,
       ]);
-      testHook(() => {
-        const [state, , loaded] = useTourStateForPerspective('dev');
-        expect(state).toEqual({ a: true });
-        expect(loaded).toEqual(true);
-      });
+      const { result } = renderHook(() => useTourStateForPerspective('dev'));
+      const [state, , loaded] = result.current;
+      expect(state).toEqual({ a: true });
+      expect(loaded).toEqual(true);
     });
   });
 });

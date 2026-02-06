@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { FC } from 'react';
 import { Formik, FormikValues, FormikHelpers } from 'formik';
 import { useTranslation } from 'react-i18next';
 import * as yup from 'yup';
@@ -14,7 +14,7 @@ export interface SinkSourceProps {
   close?: () => void;
 }
 
-const SinkSource: React.FC<SinkSourceProps> = ({ source, cancel, close }) => {
+const SinkSource: FC<SinkSourceProps> = ({ source, cancel, close }) => {
   const { t } = useTranslation();
   const {
     metadata: { namespace, name },
@@ -79,7 +79,7 @@ const SinkSource: React.FC<SinkSourceProps> = ({ source, cancel, close }) => {
           formData: yup.object().shape({
             sink: yup.object().when('sinkType', {
               is: SinkType.Uri,
-              then: sinkTypeUriValidation(t),
+              then: (schema) => schema.concat(sinkTypeUriValidation(t)),
             }),
           }),
         })

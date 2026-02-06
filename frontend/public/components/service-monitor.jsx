@@ -1,5 +1,5 @@
-import * as React from 'react';
-import * as _ from 'lodash-es';
+import { useMemo, Suspense } from 'react';
+import * as _ from 'lodash';
 import { DASH } from '@console/shared/src/constants/ui';
 
 import { ListPage } from './factory';
@@ -11,7 +11,6 @@ import { referenceForModel } from '../module/k8s';
 import { useTranslation } from 'react-i18next';
 import {
   ConsoleDataView,
-  initialFiltersDefault,
   getNameCellProps,
   actionsCellProps,
   cellIsStickyProps,
@@ -100,7 +99,7 @@ const getServiceMonitorDataViewRows = (data, columns) => {
 
 const useServiceMonitorColumns = () => {
   const { t } = useTranslation();
-  return React.useMemo(
+  return useMemo(
     () => [
       {
         title: t('public~Name'),
@@ -153,18 +152,17 @@ export const ServiceMonitorsList = (props) => {
   const columns = useServiceMonitorColumns();
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView
         {...props}
         data={data}
         loaded={loaded}
         label={ServiceMonitorModel.labelPlural}
         columns={columns}
-        initialFilters={initialFiltersDefault}
         getDataViewRows={getServiceMonitorDataViewRows}
         hideColumnManagement={true}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 

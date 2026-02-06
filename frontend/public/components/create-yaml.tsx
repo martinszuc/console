@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useParams } from 'react-router-dom-v5-compat';
 import { useTranslation } from 'react-i18next';
 import { useResolvedExtensions } from '@console/dynamic-plugin-sdk/src/api/useResolvedExtensions';
@@ -34,17 +35,15 @@ export const CreateYAMLInner = ({
   const { t } = useTranslation();
   const namespace = params.ns || 'default';
   const [templateExtensions, resolvedTemplates] = useResolvedExtensions<YAMLTemplate>(
-    React.useCallback(
+    useCallback(
       (e): e is YAMLTemplate => isYAMLTemplate(e) && e.properties.model.kind === kindObj?.kind,
       [kindObj],
     ),
   );
 
-  const yamlTemplates = React.useMemo(() => getYAMLTemplates(templateExtensions), [
-    templateExtensions,
-  ]);
+  const yamlTemplates = useMemo(() => getYAMLTemplates(templateExtensions), [templateExtensions]);
 
-  const initialResource = React.useMemo(() => {
+  const initialResource = useMemo(() => {
     if (!kindObj) {
       return {};
     }
@@ -63,7 +62,8 @@ export const CreateYAMLInner = ({
 
     const { metadata, spec } = parsed;
     const { crd, kind, namespaced } = kindObj;
-    const isDefaultTemplate = crd && template === yamlTemplates.getIn(['DEFAULT', 'default']);
+    const isDefaultTemplate =
+      crd && resolvedTemplate === yamlTemplates.getIn(['DEFAULT', 'default']);
     return {
       ...parsed,
       kind,
@@ -94,6 +94,7 @@ export const CreateYAMLInner = ({
 
   return (
     <AsyncComponent
+      blame="CreateYaml"
       loader={() => import('./droppable-edit-yaml').then((c) => c.DroppableEditYAML)}
       initialResource={initialResource}
       create={isCreate}
@@ -113,10 +114,11 @@ export const CreateYAML = (props) => {
   return <CreateYAML_ {...props} params={params} />;
 };
 
-export const EditYAMLPage: React.FCC<EditYAMLPageProps> = (props) => {
+export const EditYAMLPage: FC<EditYAMLPageProps> = (props) => {
   const params = useParams();
   const Wrapper = (wrapperProps) => (
     <AsyncComponent
+      blame="EditYamlPage"
       {...wrapperProps}
       obj={wrapperProps.obj.data}
       loader={() => import('./edit-yaml').then((c) => c.EditYAML)}

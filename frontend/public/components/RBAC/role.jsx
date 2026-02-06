@@ -1,6 +1,5 @@
-import * as _ from 'lodash-es';
-import * as React from 'react';
-import { Component } from 'react';
+import * as _ from 'lodash';
+import { Component, useState, useMemo, useEffect, useCallback, Suspense } from 'react';
 import * as fuzzy from 'fuzzysearch';
 import { useLocation, useParams } from 'react-router-dom-v5-compat';
 import { RoleModel, RoleBindingModel } from '../../models';
@@ -22,7 +21,6 @@ import {
 import { DataViewCheckboxFilter } from '@patternfly/react-data-view';
 import { tableFilters } from '../factory/table-filters';
 import { SectionHeading } from '../utils/headings';
-import { ConsoleEmptyState } from '@console/shared/src/components/empty-state';
 import { navFactory } from '../utils/horizontal-nav';
 import { ResourceLink, resourceListPathFromModel } from '../utils/resource-link';
 import { LoadingBox } from '../utils/status-box';
@@ -205,7 +203,7 @@ const getBindingsDataViewRows = (data, columns) => {
 
 const useBindingsColumns = () => {
   const { t } = useTranslation();
-  return React.useMemo(
+  return useMemo(
     () => [
       {
         title: t('public~Name'),
@@ -252,15 +250,18 @@ const BindingsListComponent = (props) => {
   const { data, loaded, staticFilters } = props;
 
   // Apply staticFilters to filter the data using table filters
-  const filteredData = React.useMemo(() => {
+  const filteredData = useMemo(() => {
     if (!staticFilters || !data) {
       return data;
     }
 
     const filtersMap = tableFilters(false); // false for fuzzy search
 
+    // Convert staticFilters to array format if it's an object
+    const filtersArray = Array.isArray(staticFilters) ? staticFilters : [staticFilters];
+
     return data.filter((binding) => {
-      return staticFilters.every((filter) => {
+      return filtersArray.every((filter) => {
         const filterKey = Object.keys(filter)[0];
         const filterValue = filter[filterKey];
 
@@ -273,18 +274,17 @@ const BindingsListComponent = (props) => {
   }, [data, staticFilters]);
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView
         {...props}
         data={filteredData}
         loaded={loaded}
         label={t('public~RoleBindings')}
         columns={columns}
-        initialFilters={initialFiltersDefault}
         getDataViewRows={getBindingsDataViewRows}
         hideColumnManagement={true}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 
@@ -422,7 +422,7 @@ const useRolesColumns = () => {
 
 const useRoleFilterOptions = () => {
   const { t } = useTranslation();
-  return React.useMemo(() => {
+  return useMemo(() => {
     return [
       {
         value: 'cluster',
@@ -442,11 +442,13 @@ const useRoleFilterOptions = () => {
 
 const RolesList = (props) => {
   const { t } = useTranslation();
-  const { data } = props;
+  const { data, loaded } = props;
   const columns = useRolesColumns();
   const roleFilterOptions = useRoleFilterOptions();
 
-  const additionalFilterNodes = React.useMemo(
+  const initialFilters = useMemo(() => ({ ...initialFiltersDefault, 'role-kind': [] }), []);
+
+  const additionalFilterNodes = useMemo(
     () => [
       <DataViewCheckboxFilter
         key="role-kind"
@@ -459,44 +461,82 @@ const RolesList = (props) => {
     [roleFilterOptions, t],
   );
 
-  const matchesAdditionalFilters = React.useCallback(
+  const matchesAdditionalFilters = useCallback(
     (resource, filters) =>
       filters['role-kind'].length === 0 || filters['role-kind'].includes(roleType(resource)),
     [],
   );
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
-      {data.length === 0 ? (
-        <ConsoleEmptyState title={t('public~No Roles found')}>
-          {t(
-            'public~Roles grant access to types of objects in the cluster. Roles are applied to a team or user via a RoleBinding.',
-          )}
-        </ConsoleEmptyState>
-      ) : (
-        <ConsoleDataView
-          {...props}
-          data={data}
-          label={t('public~Roles')}
-          columns={columns}
-          getDataViewRows={getDataViewRows}
-          initialFilters={{ ...initialFiltersDefault, 'role-kind': [] }}
-          additionalFilterNodes={additionalFilterNodes}
-          matchesAdditionalFilters={matchesAdditionalFilters}
-          hideColumnManagement={true}
-        />
-      )}
-    </React.Suspense>
+    <Suspense fallback={<LoadingBox />}>
+      <ConsoleDataView
+        {...props}
+        data={data}
+        loaded={loaded}
+        label={t('public~Roles')}
+        columns={columns}
+        getDataViewRows={getDataViewRows}
+        initialFilters={initialFilters}
+        additionalFilterNodes={additionalFilterNodes}
+        matchesAdditionalFilters={matchesAdditionalFilters}
+        hideColumnManagement={true}
+      />
+    </Suspense>
   );
 };
 
 export const RolesPage = ({ namespace, mock, showTitle }) => {
+  const { t } = useTranslation();
+  const location = useLocation();
+
+  // Track which filter is selected from URL params
+  const [selectedFilters, setSelectedFilters] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    const filterParam = params.get('rowFilter-role-kind');
+    return filterParam ? filterParam.split(',') : [];
+  });
+
   const createNS = namespace || 'default';
   const accessReview = {
     model: RoleModel,
     namespace: createNS,
   };
-  const { t } = useTranslation();
+
+  // Dynamically determine which resources to fetch
+  const resources = useMemo(() => {
+    const hasCluster = selectedFilters.includes('cluster');
+    const hasNamespaceOrSystem =
+      selectedFilters.includes('namespace') || selectedFilters.includes('system');
+
+    const resourcesList = [];
+
+    // Only fetch Role if namespace/system filter selected OR no filters selected
+    if (hasNamespaceOrSystem || selectedFilters.length === 0) {
+      resourcesList.push({ kind: 'Role', namespaced: true, optional: true });
+    }
+
+    // Only fetch ClusterRole if cluster filter selected OR no filters selected
+    if (hasCluster || selectedFilters.length === 0) {
+      resourcesList.push({ kind: 'ClusterRole', namespaced: false, optional: true });
+    }
+
+    return resourcesList;
+  }, [selectedFilters]);
+
+  // Update state when URL params change
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const filterParam = params.get('rowFilter-role-kind');
+    const newFilters = filterParam ? filterParam.split(',') : [];
+
+    const sortedNew = [...newFilters].sort();
+    const sortedSelected = [...selectedFilters].sort();
+
+    if (!_.isEqual(sortedNew, sortedSelected)) {
+      setSelectedFilters(newFilters);
+    }
+  }, [location.search, selectedFilters]);
+
   return (
     <MultiListPage
       ListComponent={RolesList}
@@ -506,11 +546,8 @@ export const RolesPage = ({ namespace, mock, showTitle }) => {
       createAccessReview={accessReview}
       createButtonText={t('public~Create Role')}
       createProps={{ to: `/k8s/ns/${createNS}/roles/~new` }}
-      flatten={(resources) => _.flatMap(resources, 'data').filter((r) => !!r)}
-      resources={[
-        { kind: 'Role', namespaced: true, optional: mock },
-        { kind: 'ClusterRole', namespaced: false, optional: true },
-      ]}
+      flatten={(resourcesData) => _.flatMap(resourcesData, 'data').filter((r) => !!r)}
+      resources={resources}
       title={t('public~Roles')}
       mock={mock}
       omitFilterToolbar={true}

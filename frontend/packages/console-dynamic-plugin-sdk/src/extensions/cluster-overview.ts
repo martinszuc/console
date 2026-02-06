@@ -1,14 +1,13 @@
-import * as React from 'react';
-import { OverviewDetailItemProps } from '@openshift-console/plugin-shared/src';
-import { CodeRef, Extension, ExtensionDeclaration } from '../types';
+import type { ComponentType } from 'react';
+import { Extension, CodeRef } from '../types';
 import { Humanize, TopConsumerPopoverProps, QueryWithDescription } from './console-types';
 
 /** Adds a new inventory item into cluster overview page. */
-export type ClusterOverviewInventoryItem = ExtensionDeclaration<
+export type ClusterOverviewInventoryItem = Extension<
   'console.cluster-overview/inventory-item',
   {
     /** The component to be rendered. */
-    component: CodeRef<React.ComponentType>;
+    component: CodeRef<ComponentType>;
   }
 >;
 
@@ -16,7 +15,7 @@ export type GetQuery = (nodeType: string[]) => string;
 export type GetMultilineQueries = (nodeType: string[]) => QueryWithDescription[];
 
 /** Adds a new cluster overview utilization item. */
-export type ClusterOverviewUtilizationItem = ExtensionDeclaration<
+export type ClusterOverviewUtilizationItem = Extension<
   'console.cluster-overview/utilization-item',
   {
     /** The title of the utilization item. */
@@ -32,12 +31,12 @@ export type ClusterOverviewUtilizationItem = ExtensionDeclaration<
     /** Prometheus limit query. */
     getLimitQuery?: CodeRef<GetQuery>;
     /** Shows Top consumer popover instead of plain value */
-    TopConsumerPopover?: CodeRef<React.ComponentType<TopConsumerPopoverProps>>;
+    TopConsumerPopover?: CodeRef<ComponentType<TopConsumerPopoverProps>>;
   }
 >;
 
 /** Adds a new cluster overview multiline utilization item. */
-export type ClusterOverviewMultilineUtilizationItem = ExtensionDeclaration<
+export type ClusterOverviewMultilineUtilizationItem = Extension<
   'console.cluster-overview/multiline-utilization-item',
   {
     /** The title of the utilization item. */
@@ -47,27 +46,31 @@ export type ClusterOverviewMultilineUtilizationItem = ExtensionDeclaration<
     /** Convert prometheus data to human readable form. */
     humanize: CodeRef<Humanize>;
     /** Shows Top consumer popover instead of plain value */
-    TopConsumerPopovers?: CodeRef<React.ComponentType<TopConsumerPopoverProps>[]>;
+    TopConsumerPopovers?: CodeRef<ComponentType<TopConsumerPopoverProps>[]>;
   }
 >;
 
 /**
  * @deprecated use CustomOverviewDetailItem type instead
  */
-export type OverviewDetailItem = ExtensionDeclaration<
+export type OverviewDetailItem = Extension<
   'console.dashboards/overview/detail/item',
   {
     /** The value, based on the DetailItem component */
-    component: CodeRef<React.ComponentType>;
+    component: CodeRef<ComponentType>;
   }
 >;
 
 /** Adds an item to the Details card of Overview Dashboard */
-export type CustomOverviewDetailItem = ExtensionDeclaration<
+export type CustomOverviewDetailItem = Extension<
   'console.dashboards/custom/overview/detail/item',
-  Omit<OverviewDetailItemProps, 'children' | 'isLoading' | 'error'> & {
+  {
+    /** Details card title */
+    title: string;
+    /** Optional class name for the value */
+    valueClassName?: string;
     /** The value, rendered by the OverviewDetailItem component */
-    component: CodeRef<React.ComponentType>;
+    component: CodeRef<ComponentType>;
     /** Function returning the loading state of the component */
     isLoading?: CodeRef<() => boolean>;
     /** Function returning errors to be displayed by the component */

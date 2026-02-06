@@ -1,7 +1,6 @@
-import { act } from 'react-dom/test-utils';
+import { act, renderHook } from '@testing-library/react';
 import { checkAccess } from '@console/dynamic-plugin-sdk/src/app/components/utils/rbac';
 import { useExtensions } from '@console/plugin-sdk/src/api/useExtensions';
-import { testHook } from '@console/shared/src/test-utils/hooks-utils';
 import { usePerspectives } from '..';
 import { Perspective, PerspectiveVisibilityState } from '../perspective-utils';
 
@@ -21,7 +20,7 @@ describe('usePerspectives', () => {
         type: 'Perspective',
         properties: {
           id: 'admin',
-          name: 'Administrator',
+          name: 'Core platform',
         },
       },
       {
@@ -46,14 +45,14 @@ describe('usePerspectives', () => {
   it('should return all the available perspectives if perspectives are not set in the server flags', async () => {
     window.SERVER_FLAGS.perspectives = undefined;
 
-    const { result } = testHook(() => usePerspectives());
+    const { result } = renderHook(() => usePerspectives());
 
     expect(result.current).toEqual([
       {
         type: 'Perspective',
         properties: {
           id: 'admin',
-          name: 'Administrator',
+          name: 'Core platform',
         },
       },
       {
@@ -78,14 +77,14 @@ describe('usePerspectives', () => {
   it('should return all the available perspectives if perspectives are not configured in the server flags', async () => {
     window.SERVER_FLAGS.perspectives = '';
 
-    const { result } = testHook(() => usePerspectives());
+    const { result } = renderHook(() => usePerspectives());
 
     expect(result.current).toEqual([
       {
         type: 'Perspective',
         properties: {
           id: 'admin',
-          name: 'Administrator',
+          name: 'Core platform',
         },
       },
       {
@@ -138,7 +137,7 @@ describe('usePerspectives', () => {
     ];
     window.SERVER_FLAGS.perspectives = JSON.stringify(perspectives);
     (checkAccess as jest.Mock).mockReturnValue(Promise.resolve({ status: { allowed: true } }));
-    const { result, rerender } = testHook(() => usePerspectives());
+    const { result, rerender } = renderHook(() => usePerspectives());
 
     await act(async () => {
       rerender();
@@ -187,7 +186,7 @@ describe('usePerspectives', () => {
     window.SERVER_FLAGS.perspectives = JSON.stringify(perspectives);
     (checkAccess as jest.Mock).mockReturnValue(Promise.resolve({ status: { allowed: true } }));
 
-    const { result, rerender } = testHook(() => usePerspectives());
+    const { result, rerender } = renderHook(() => usePerspectives());
 
     await act(async () => {
       rerender();
@@ -198,7 +197,7 @@ describe('usePerspectives', () => {
         type: 'Perspective',
         properties: {
           id: 'admin',
-          name: 'Administrator',
+          name: 'Core platform',
         },
       },
     ]);
@@ -235,7 +234,7 @@ describe('usePerspectives', () => {
     ];
     window.SERVER_FLAGS.perspectives = JSON.stringify(perspectives);
     (checkAccess as jest.Mock).mockReturnValue(Promise.resolve({ status: { allowed: true } }));
-    const { result, rerender } = testHook(() => usePerspectives());
+    const { result, rerender } = renderHook(() => usePerspectives());
 
     await act(async () => {
       rerender();
@@ -293,7 +292,7 @@ describe('usePerspectives', () => {
     ];
     window.SERVER_FLAGS.perspectives = JSON.stringify(perspectives);
     (checkAccess as jest.Mock).mockReturnValue(Promise.resolve({ status: { allowed: true } }));
-    const { result, rerender } = testHook(() => usePerspectives());
+    const { result, rerender } = renderHook(() => usePerspectives());
 
     await act(async () => {
       rerender();
@@ -342,7 +341,7 @@ describe('usePerspectives', () => {
     ];
     window.SERVER_FLAGS.perspectives = JSON.stringify(perspectives);
     (checkAccess as jest.Mock).mockReturnValue(Promise.resolve({ status: { allowed: false } }));
-    const { result, rerender } = testHook(() => usePerspectives());
+    const { result, rerender } = renderHook(() => usePerspectives());
 
     await act(async () => {
       rerender();
@@ -391,7 +390,7 @@ describe('usePerspectives', () => {
     ];
     window.SERVER_FLAGS.perspectives = JSON.stringify(perspectives);
     (checkAccess as jest.Mock).mockReturnValue(Promise.reject(new Error('Unexpected error')));
-    const { result, rerender } = testHook(() => usePerspectives());
+    const { result, rerender } = renderHook(() => usePerspectives());
 
     await act(async () => {
       rerender();
@@ -428,7 +427,7 @@ describe('usePerspectives', () => {
     ];
     window.SERVER_FLAGS.perspectives = JSON.stringify(perspectives);
     (checkAccess as jest.Mock).mockReturnValue(Promise.resolve({ status: { allowed: true } }));
-    const { result, rerender } = testHook(() => usePerspectives());
+    const { result, rerender } = renderHook(() => usePerspectives());
 
     await act(async () => {
       rerender();
@@ -439,7 +438,7 @@ describe('usePerspectives', () => {
         type: 'Perspective',
         properties: {
           id: 'admin',
-          name: 'Administrator',
+          name: 'Core platform',
         },
       },
       {

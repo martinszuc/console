@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC, ReactNode } from 'react';
+import { useState } from 'react';
 import {
   Drawer,
   DrawerActions,
@@ -22,7 +23,7 @@ import { MultiTabbedTerminal } from '@console/webterminal-plugin/src/components/
 import './CloudShellDrawer.scss';
 
 interface CloudShellDrawerProps {
-  children: React.ReactNode;
+  children: ReactNode;
   open?: boolean;
   onClose?: () => void;
 }
@@ -36,13 +37,13 @@ const getMastheadHeight = (): number => {
 
 const HEADER_HEIGHT = `calc(${pfSplitterHeight.var} + var(--co-cloud-shell-header-height))`;
 
-export const CloudShellDrawer: React.FCC<CloudShellDrawerProps> = ({
+export const CloudShellDrawer: FC<CloudShellDrawerProps> = ({
   open = true,
   onClose = () => undefined,
   children,
 }) => {
-  const [expanded, setExpanded] = React.useState<boolean>(true);
-  const [height, setHeight] = React.useState<number>(385);
+  const [expanded, setExpanded] = useState<boolean>(true);
+  const [height, setHeight] = useState<number>(385);
   const { t } = useTranslation('webterminal-plugin');
   const fireTelemetryEvent = useTelemetry();
 

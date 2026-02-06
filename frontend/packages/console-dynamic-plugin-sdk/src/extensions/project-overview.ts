@@ -1,20 +1,20 @@
-import * as React from 'react';
-import { CodeRef, Extension, ExtensionDeclaration } from '../types';
+import type { ComponentType } from 'react';
+import { Extension, CodeRef } from '../types';
 import { Humanize, TopConsumerPopoverProps } from './console-types';
 
 /** Adds a new inventory item into project overview page. */
-export type ProjectOverviewInventoryItem = ExtensionDeclaration<
+export type ProjectOverviewInventoryItem = Extension<
   'console.project-overview/inventory-item',
   {
     /** The component to be rendered. */
-    component: CodeRef<React.ComponentType<{ projectName: string }>>;
+    component: CodeRef<ComponentType<{ projectName: string }>>;
   }
 >;
 
 export type GetProjectQuery = (projectName: string) => string;
 
 /** Adds a new project overview utilization item. */
-export type ProjectOverviewUtilizationItem = ExtensionDeclaration<
+export type ProjectOverviewUtilizationItem = Extension<
   'console.project-overview/utilization-item',
   {
     /** The title of the utilization item. */
@@ -30,7 +30,7 @@ export type ProjectOverviewUtilizationItem = ExtensionDeclaration<
     /** Prometheus limit query. */
     getLimitQuery?: CodeRef<GetProjectQuery>;
     /** Shows Top consumer popover instead of plain value */
-    TopConsumerPopover?: CodeRef<React.ComponentType<TopConsumerPopoverProps>>;
+    TopConsumerPopover?: CodeRef<ComponentType<TopConsumerPopoverProps>>;
   }
 >;
 

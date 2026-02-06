@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FormEventHandler } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import {
   Form,
   FormHelperText,
@@ -19,8 +20,9 @@ import {
   ModalComponentProps,
   ModalSubmitFooter,
   ModalTitle,
-  createModalLauncher,
+  ModalWrapper,
 } from '../factory/modal';
+import { OverlayComponent } from '@console/dynamic-plugin-sdk/src/app/modal-support/OverlayProvider';
 import { ExternalLink } from '@console/shared/src/components/links/ExternalLink';
 import {
   documentationURLs,
@@ -29,7 +31,6 @@ import {
   isUpstream,
 } from '../utils/documentation';
 import { useTranslation } from 'react-i18next';
-import { TFunction } from 'i18next';
 import { CLUSTER_VERSION_DEFAULT_UPSTREAM_SERVER_URL_PLACEHOLDER } from '@console/shared/src/constants';
 import { usePromiseHandler } from '@console/shared/src/hooks/promise-handler';
 
@@ -38,12 +39,12 @@ export const ConfigureClusterUpstreamModal = (props: ConfigureClusterUpstreamMod
   const [handlePromise, inProgress, errorMessage] = usePromiseHandler();
   const currentUpstream = cv?.spec?.upstream;
 
-  const [customSelected, setCustomSelected] = React.useState(!!currentUpstream);
-  const [customURL, setCustomURL] = React.useState(currentUpstream ?? '');
-  const customURLInputRef = React.useRef(null);
-  const [invalidCustomURL, setInvalidCustomURL] = React.useState(false);
+  const [customSelected, setCustomSelected] = useState(!!currentUpstream);
+  const [customURL, setCustomURL] = useState(currentUpstream ?? '');
+  const customURLInputRef = useRef(null);
+  const [invalidCustomURL, setInvalidCustomURL] = useState(false);
 
-  const submit: React.FormEventHandler<HTMLFormElement> = React.useCallback(
+  const submit: FormEventHandler<HTMLFormElement> = useCallback(
     (e): void => {
       e.preventDefault();
       if (customSelected) {
@@ -165,9 +166,20 @@ export const ConfigureClusterUpstreamModal = (props: ConfigureClusterUpstreamMod
   );
 };
 
-export const configureClusterUpstreamModal = createModalLauncher(ConfigureClusterUpstreamModal);
+export const ConfigureClusterUpstreamModalOverlay: OverlayComponent<ConfigureClusterUpstreamModalProps> = (
+  props,
+) => {
+  return (
+    <ModalWrapper blocking onClose={props.closeOverlay}>
+      <ConfigureClusterUpstreamModal
+        {...props}
+        cancel={props.closeOverlay}
+        close={props.closeOverlay}
+      />
+    </ModalWrapper>
+  );
+};
 
 export type ConfigureClusterUpstreamModalProps = {
   cv: ClusterVersionKind;
-  t: TFunction;
 } & ModalComponentProps;

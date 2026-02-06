@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FormEvent } from 'react';
+import { useState } from 'react';
 import {
   FormGroup,
   FormHelperText,
@@ -9,13 +10,15 @@ import {
   TextInput,
 } from '@patternfly/react-core';
 import { Trans, useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom-v5-compat';
 import { VolumeModeSelector } from '@console/app/src/components/volume-modes/volume-mode';
+import { OverlayComponent } from '@console/dynamic-plugin-sdk/src/app/modal-support/OverlayProvider';
 import {
   ModalBody,
   ModalComponentProps,
   ModalSubmitFooter,
   ModalTitle,
-  createModalLauncher,
+  ModalWrapper,
 } from '@console/internal/components/factory';
 import {
   dropdownUnits,
@@ -27,7 +30,6 @@ import { useK8sGet } from '@console/internal/components/utils/k8s-get-hook';
 import { RequestSizeInput } from '@console/internal/components/utils/request-size-input';
 import { ResourceIcon } from '@console/internal/components/utils/resource-icon';
 import { resourcePathFromModel } from '@console/internal/components/utils/resource-link';
-import { history } from '@console/internal/components/utils/router';
 import { StorageClassDropdown } from '@console/internal/components/utils/storage-class-dropdown';
 import {
   convertToBaseValue,
@@ -59,17 +61,18 @@ import './restore-pvc-modal.scss';
 const RestorePVCModal = ({ close, cancel, resource }: RestorePVCModalProps) => {
   const [handlePromise, inProgress, errorMessage] = usePromiseHandler<PersistentVolumeClaimKind>();
   const { t } = useTranslation();
-  const [restorePVCName, setPVCName] = React.useState(`${getName(resource) || 'pvc'}-restore`);
+  const navigate = useNavigate();
+  const [restorePVCName, setPVCName] = useState(`${getName(resource) || 'pvc'}-restore`);
   const volumeSnapshotAnnotations = getAnnotations(resource);
   const snapshotBaseSize = convertToBaseValue(resource?.status?.restoreSize ?? '0');
   const snapshotHumanizedSize = humanizeBinaryBytesWithoutB(snapshotBaseSize);
-  const [requestedSize, setRequestedSize] = React.useState(snapshotHumanizedSize.value);
-  const [requestedUnit, setRequestedUnit] = React.useState(snapshotHumanizedSize.unit);
-  const [pvcSC, setPVCStorageClass] = React.useState('');
+  const [requestedSize, setRequestedSize] = useState(snapshotHumanizedSize.value);
+  const [requestedUnit, setRequestedUnit] = useState(snapshotHumanizedSize.unit);
+  const [pvcSC, setPVCStorageClass] = useState('');
   const requestedBytes = convertToBaseValue(requestedSize + requestedUnit);
   const validSize = requestedBytes >= snapshotBaseSize;
-  const [restoreAccessMode, setRestoreAccessMode] = React.useState('');
-  const [updatedProvisioner, setUpdatedProvisioner] = React.useState('');
+  const [restoreAccessMode, setRestoreAccessMode] = useState('');
+  const [updatedProvisioner, setUpdatedProvisioner] = useState('');
   const namespace = getNamespace(resource);
   const snapshotName = getName(resource);
 
@@ -83,7 +86,7 @@ const RestorePVCModal = ({ close, cancel, resource }: RestorePVCModalProps) => {
     pvcStorageClassName,
   );
 
-  const [volumeMode, setVolumeMode] = React.useState('');
+  const [volumeMode, setVolumeMode] = useState('');
   const requestedSizeInputChange = ({ value, unit }) => {
     setRequestedSize(value);
     setRequestedUnit(unit);
@@ -94,7 +97,7 @@ const RestorePVCModal = ({ close, cancel, resource }: RestorePVCModalProps) => {
     setUpdatedProvisioner(updatedStorageClass?.provisioner);
   };
 
-  const submit = (event: React.FormEvent<EventTarget>) => {
+  const submit = (event: FormEvent<EventTarget>) => {
     event.preventDefault();
     const restorePVCTemplate: PersistentVolumeClaimKind = {
       apiVersion: PersistentVolumeClaimModel.apiVersion,
@@ -123,7 +126,7 @@ const RestorePVCModal = ({ close, cancel, resource }: RestorePVCModalProps) => {
     handlePromise(k8sCreate(PersistentVolumeClaimModel, restorePVCTemplate, { ns: namespace }))
       .then((newPVC) => {
         close();
-        history.push(
+        navigate(
           resourcePathFromModel(PersistentVolumeClaimModel, newPVC.metadata.name, namespace),
         );
       })
@@ -277,4 +280,10 @@ type RestorePVCModalProps = {
   resource: VolumeSnapshotKind;
 } & ModalComponentProps;
 
-export default createModalLauncher(RestorePVCModal);
+export const RestorePVCModalOverlay: OverlayComponent<RestorePVCModalProps> = (props) => {
+  return (
+    <ModalWrapper blocking onClose={props.closeOverlay}>
+      <RestorePVCModal {...props} cancel={props.closeOverlay} close={props.closeOverlay} />
+    </ModalWrapper>
+  );
+};

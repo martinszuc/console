@@ -1,5 +1,6 @@
-import * as _ from 'lodash-es';
-import * as React from 'react';
+import * as _ from 'lodash';
+import type { FC } from 'react';
+import { useMemo, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom';
 import {
@@ -20,7 +21,6 @@ import {
   actionsCellProps,
   cellIsStickyProps,
   getNameCellProps,
-  initialFiltersDefault,
   ConsoleDataView,
 } from '@console/app/src/components/data-view/ConsoleDataView';
 import { GetDataViewRows } from '@console/app/src/components/data-view/types';
@@ -48,9 +48,7 @@ const getReadyReplicas = (resource: ControlPlaneMachineSetKind) => {
   return resource?.status?.readyReplicas || 0;
 };
 
-const ControlPlaneMachineSetCounts: React.FC<ControlPlaneMachineSetCountsProps> = ({
-  resource,
-}) => {
+const ControlPlaneMachineSetCounts: FC<ControlPlaneMachineSetCountsProps> = ({ resource }) => {
   const { t } = useTranslation();
 
   const desiredReplicas = getDesiredReplicas(resource);
@@ -138,7 +136,7 @@ const ControlPlaneMachineSetCounts: React.FC<ControlPlaneMachineSetCountsProps> 
   );
 };
 
-const ControlPlaneMachineSetDetails: React.FCC<ControlPlaneMachineSetDetailsProps> = ({ obj }) => {
+const ControlPlaneMachineSetDetails: FC<ControlPlaneMachineSetDetailsProps> = ({ obj }) => {
   const { t } = useTranslation();
   return (
     <>
@@ -180,7 +178,7 @@ const ControlPlaneMachineSetDetails: React.FCC<ControlPlaneMachineSetDetailsProp
   );
 };
 
-export const MachineTabPage: React.FC<MachineTabPageProps> = ({ obj }) => (
+export const MachineTabPage: FC<MachineTabPageProps> = ({ obj }) => (
   <MachinePage namespace={obj.metadata.namespace} showTitle={false} selector={obj.spec.selector} />
 );
 
@@ -191,7 +189,7 @@ const pages = [
   navFactory.events(ResourceEventStream),
 ];
 
-export const ControlPlaneMachineSetDetailsPage: React.FC<any> = (props) => (
+export const ControlPlaneMachineSetDetailsPage: FC<any> = (props) => (
   <DetailsPage {...props} kind={controlPlaneMachineSetReference} pages={pages} />
 );
 
@@ -206,7 +204,7 @@ const tableColumnInfo = [
 
 const useControlPlaneMachineSetColumns = (): TableColumn<ControlPlaneMachineSetKind>[] => {
   const { t } = useTranslation();
-  const columns: TableColumn<ControlPlaneMachineSetKind>[] = React.useMemo(() => {
+  const columns: TableColumn<ControlPlaneMachineSetKind>[] = useMemo(() => {
     return [
       {
         title: t('public~Name'),
@@ -261,11 +259,7 @@ const useControlPlaneMachineSetColumns = (): TableColumn<ControlPlaneMachineSetK
   return columns;
 };
 
-export const MachinesCell: React.FCC<MachinesCellProps> = ({
-  desiredReplicas,
-  readyReplicas,
-  path,
-}) => {
+export const MachinesCell: FC<MachinesCellProps> = ({ desiredReplicas, readyReplicas, path }) => {
   const { t } = useTranslation();
   return (
     <Link to={`${path}/machines`}>
@@ -277,7 +271,7 @@ export const MachinesCell: React.FCC<MachinesCellProps> = ({
   );
 };
 
-const getDataViewRows: GetDataViewRows<ControlPlaneMachineSetKind, undefined> = (data, columns) => {
+const getDataViewRows: GetDataViewRows<ControlPlaneMachineSetKind> = (data, columns) => {
   return data.map(({ obj }) => {
     const { name, namespace } = obj.metadata;
     const desiredReplicas = getDesiredReplicas(obj);
@@ -325,7 +319,7 @@ const getDataViewRows: GetDataViewRows<ControlPlaneMachineSetKind, undefined> = 
   });
 };
 
-const ControlPlaneMachineSetList: React.FC<ControlPlaneMachineSetListProps> = ({
+const ControlPlaneMachineSetList: FC<ControlPlaneMachineSetListProps> = ({
   data,
   loaded,
   loadError,
@@ -334,23 +328,22 @@ const ControlPlaneMachineSetList: React.FC<ControlPlaneMachineSetListProps> = ({
   const columns = useControlPlaneMachineSetColumns();
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
-      <ConsoleDataView<ControlPlaneMachineSetKind, undefined>
+    <Suspense fallback={<LoadingBox />}>
+      <ConsoleDataView<ControlPlaneMachineSetKind>
         {...props}
         label={ControlPlaneMachineSetModel.labelPlural}
         data={data}
         loaded={loaded}
         loadError={loadError}
         columns={columns}
-        initialFilters={initialFiltersDefault}
         getDataViewRows={getDataViewRows}
         hideColumnManagement={true}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 
-export const ControlPlaneMachineSetListPage: React.FC<any> = (props) => (
+export const ControlPlaneMachineSetListPage: FC<any> = (props) => (
   <ListPage
     {...props}
     ListComponent={ControlPlaneMachineSetList}

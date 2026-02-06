@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { MouseEvent, FC } from 'react';
+import { useMemo, useCallback, Suspense } from 'react';
 import { Pagination } from '@patternfly/react-core';
 import {
   DataView,
@@ -9,6 +10,7 @@ import {
   useDataViewPagination,
 } from '@patternfly/react-data-view';
 import { InnerScrollContainer, SortByDirection } from '@patternfly/react-table';
+import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { LoadingBox } from '@console/internal/components/utils';
 import { HelmRelease } from '../../../types/helm-types';
@@ -23,14 +25,14 @@ export interface HelmReleaseHistoryTableProps {
   isLoading?: boolean;
   customColumns?: (
     sortBy: { index: number; direction: SortByDirection },
-    onSort: (event: React.MouseEvent, columnId: string, direction: SortByDirection) => void,
+    onSort: (event: MouseEvent, columnId: string, direction: SortByDirection) => void,
   ) => DataViewTh[];
   customRowRenderer?: (releaseHistory: HelmRelease[]) => DataViewTd[][];
   customGetColumnIndexById?: (columnId: string) => number;
   customSortFunctions?: Record<number, (release: HelmRelease) => any>;
 }
 
-const HelmReleaseHistoryTable: React.FC<HelmReleaseHistoryTableProps> = ({
+const HelmReleaseHistoryTable: FC<HelmReleaseHistoryTableProps> = ({
   releaseHistory,
   isLoading = false,
   customColumns,
@@ -38,6 +40,7 @@ const HelmReleaseHistoryTable: React.FC<HelmReleaseHistoryTableProps> = ({
   customGetColumnIndexById,
   customSortFunctions,
 }) => {
+  const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Initialize pagination
@@ -50,7 +53,7 @@ const HelmReleaseHistoryTable: React.FC<HelmReleaseHistoryTableProps> = ({
   const getColumnIndex = customGetColumnIndexById || getColumnIndexById;
 
   // Get sort state from query parameters
-  const sortBy = React.useMemo(() => {
+  const sortBy = useMemo(() => {
     const sortByParam = searchParams.get('sortBy');
     const sortDirection = searchParams.get('sortDirection');
 
@@ -61,8 +64,8 @@ const HelmReleaseHistoryTable: React.FC<HelmReleaseHistoryTableProps> = ({
   }, [searchParams, getColumnIndex, customGetColumnIndexById]);
 
   // Sort handler - updates query parameters
-  const onSort = React.useCallback(
-    (_event: React.MouseEvent, columnId: string, direction: SortByDirection) => {
+  const onSort = useCallback(
+    (_event: MouseEvent, columnId: string, direction: SortByDirection) => {
       setSearchParams((prev) => {
         const newParams = new URLSearchParams(prev);
         newParams.set('sortBy', columnId);
@@ -77,7 +80,7 @@ const HelmReleaseHistoryTable: React.FC<HelmReleaseHistoryTableProps> = ({
   const columns = customColumns ? customColumns(sortBy, onSort) : defaultColumns;
 
   // Sort the release history based on the selected column
-  const sortedReleaseHistory = React.useMemo(() => {
+  const sortedReleaseHistory = useMemo(() => {
     if (!releaseHistory) return [];
 
     const defaultSortFunctions: Record<number, (release: HelmRelease) => any> = {
@@ -112,27 +115,24 @@ const HelmReleaseHistoryTable: React.FC<HelmReleaseHistoryTableProps> = ({
     return sorted;
   }, [releaseHistory, sortBy, customSortFunctions, customGetColumnIndexById]);
 
-  const defaultRowRenderer = React.useCallback(
-    (history: HelmRelease[]) => getRevisionRows(history),
-    [],
-  );
+  const defaultRowRenderer = useCallback((history: HelmRelease[]) => getRevisionRows(history), []);
 
   const rowRenderer = customRowRenderer || defaultRowRenderer;
 
   // Apply pagination by slicing the sorted data
-  const paginatedReleaseHistory = React.useMemo(() => {
+  const paginatedReleaseHistory = useMemo(() => {
     const startIndex = (pagination.page - 1) * pagination.perPage;
     const endIndex = startIndex + pagination.perPage;
     return sortedReleaseHistory.slice(startIndex, endIndex);
   }, [sortedReleaseHistory, pagination.page, pagination.perPage]);
 
-  const rows = React.useMemo(() => rowRenderer(paginatedReleaseHistory), [
+  const rows = useMemo(() => rowRenderer(paginatedReleaseHistory), [
     rowRenderer,
     paginatedReleaseHistory,
   ]);
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       {isLoading || !releaseHistory ? (
         <LoadingBox />
       ) : (
@@ -145,6 +145,7 @@ const HelmReleaseHistoryTable: React.FC<HelmReleaseHistoryTableProps> = ({
                 page={pagination.page}
                 onSetPage={pagination.onSetPage}
                 onPerPageSelect={pagination.onPerPageSelect}
+                titles={{ ofWord: t('helm-plugin~of') }}
                 isCompact
               />
             }
@@ -160,7 +161,7 @@ const HelmReleaseHistoryTable: React.FC<HelmReleaseHistoryTableProps> = ({
           </InnerScrollContainer>
         </DataView>
       )}
-    </React.Suspense>
+    </Suspense>
   );
 };
 

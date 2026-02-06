@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { FC } from 'react';
 import { InProgressIcon } from '@patternfly/react-icons';
 import { StatusComponentProps } from '../../../extensions/console-types';
 import GenericStatus from './GenericStatus';
@@ -16,7 +16,7 @@ import { RedExclamationCircleIcon, GreenCheckCircleIcon, BlueInfoCircleIcon } fr
  * <ErrorStatus title={errorMsg} />
  * ```
  */
-export const ErrorStatus: React.FC<StatusComponentProps> = (props) => (
+export const ErrorStatus: FC<StatusComponentProps> = (props) => (
   <GenericStatus {...props} Icon={RedExclamationCircleIcon} />
 );
 ErrorStatus.displayName = 'ErrorStatus';
@@ -33,7 +33,7 @@ ErrorStatus.displayName = 'ErrorStatus';
  * <InfoStatus title={infoMsg} />
  * ```
  */
-export const InfoStatus: React.FC<StatusComponentProps> = (props) => (
+export const InfoStatus: FC<StatusComponentProps> = (props) => (
   <GenericStatus {...props} Icon={BlueInfoCircleIcon} />
 );
 InfoStatus.displayName = 'InfoStatus';
@@ -45,12 +45,13 @@ InfoStatus.displayName = 'InfoStatus';
  * @param {boolean} [noTooltip] - (optional) if true, tooltip is not displayed
  * @param {string} [className] - (optional) additional class name for the component
  * @param {string} [popoverTitle] - (optional) title for popover
+ * @param {ReactNode} [children] - (optional) children for the component
  * @example
  * ```tsx
  * <ProgressStatus title={progressMsg} />
  * ```
  */
-export const ProgressStatus: React.FC<StatusComponentProps> = (props) => (
+export const ProgressStatus: FC<StatusComponentProps> = (props) => (
   <GenericStatus {...props} Icon={InProgressIcon} />
 );
 ProgressStatus.displayName = 'ProgressStatus';
@@ -67,7 +68,7 @@ ProgressStatus.displayName = 'ProgressStatus';
  * <SuccessStatus title={successMsg} />
  * ```
  */
-export const SuccessStatus: React.FC<StatusComponentProps> = (props) => (
+export const SuccessStatus: FC<StatusComponentProps> = (props) => (
   <GenericStatus {...props} Icon={GreenCheckCircleIcon} />
 );
 SuccessStatus.displayName = 'SuccessStatus';

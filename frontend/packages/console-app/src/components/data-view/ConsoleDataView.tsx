@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC, ReactNode } from 'react';
+import { useMemo } from 'react';
 import {
   ResponsiveAction,
   ResponsiveActions,
@@ -16,47 +17,24 @@ import DataViewFilters from '@patternfly/react-data-view/dist/cjs/DataViewFilter
 import { ColumnsIcon } from '@patternfly/react-icons';
 import { InnerScrollContainer, Tbody, Td, Tr } from '@patternfly/react-table';
 import { useTranslation } from 'react-i18next';
-import { ColumnLayout } from '@console/dynamic-plugin-sdk/src/extensions/console-types';
+import type {
+  ResourceFilters,
+  ConsoleDataViewProps,
+} from '@console/dynamic-plugin-sdk/src/api/internal-types';
 import { createColumnManagementModal } from '@console/internal/components/modals';
-import { TableColumn } from '@console/internal/module/k8s';
 import { EmptyBox } from '@console/shared/src/components/empty-state/EmptyBox';
 import { StatusBox } from '@console/shared/src/components/status/StatusBox';
 import { DataViewLabelFilter } from './DataViewLabelFilter';
-import { ResourceFilters, ResourceMetadata, GetDataViewRows } from './types';
 import { useConsoleDataViewData } from './useConsoleDataViewData';
 import { useConsoleDataViewFilters } from './useConsoleDataViewFilters';
 
-export type ConsoleDataViewProps<TData, TCustomRowData, TFilters> = {
-  label?: string;
-  data: TData[];
-  loaded: boolean;
-  loadError?: any;
-  columns: TableColumn<TData>[];
-  columnLayout?: ColumnLayout;
-  columnManagementID?: string;
-  initialFilters: TFilters;
-  additionalFilterNodes?: React.ReactNode[];
-  /**
-   * By default, `TData` is assumed to be assignable to `K8sResourceCommon` type.
-   *
-   * This function overrides the default getters for the metadata of `TData` objects.
-   */
-  getObjectMetadata?: (obj: TData) => ResourceMetadata;
-  matchesAdditionalFilters?: (obj: TData, filters: TFilters) => boolean;
-  getDataViewRows: GetDataViewRows<TData, TCustomRowData>;
-  customRowData?: TCustomRowData;
-  showNamespaceOverride?: boolean;
-  hideNameLabelFilters?: boolean;
-  hideLabelFilter?: boolean;
-  hideColumnManagement?: boolean;
-  mock?: boolean;
-};
+export const initialFiltersDefault: ResourceFilters = { name: '', label: '' };
 
-export const BodyLoading: React.FCC<{ columns: number }> = ({ columns }) => {
+export const BodyLoading: FC<{ columns: number }> = ({ columns }) => {
   return <SkeletonTableBody rowsCount={5} columnsCount={columns} />;
 };
 
-export const BodyEmpty: React.FCC<{ label: string; colSpan: number }> = ({ label, colSpan }) => {
+export const BodyEmpty: FC<{ label: string; colSpan: number }> = ({ label, colSpan }) => {
   const { t } = useTranslation();
   return (
     <Tbody>
@@ -86,7 +64,7 @@ export const ConsoleDataView = <
   columns,
   columnLayout,
   columnManagementID,
-  initialFilters,
+  initialFilters = initialFiltersDefault as TFilters,
   additionalFilterNodes,
   getObjectMetadata,
   matchesAdditionalFilters,
@@ -124,16 +102,16 @@ export const ConsoleDataView = <
     customRowData,
   });
 
-  const bodyLoading = React.useMemo(() => <BodyLoading columns={dataViewColumns.length} />, [
+  const bodyLoading = useMemo(() => <BodyLoading columns={dataViewColumns.length} />, [
     dataViewColumns.length,
   ]);
 
-  const bodyEmpty = React.useMemo(
-    () => <BodyEmpty label={label} colSpan={dataViewColumns.length} />,
-    [dataViewColumns.length, label],
-  );
+  const bodyEmpty = useMemo(() => <BodyEmpty label={label} colSpan={dataViewColumns.length} />, [
+    dataViewColumns.length,
+    label,
+  ]);
 
-  const activeState = React.useMemo(() => {
+  const activeState = useMemo(() => {
     if (!loaded) {
       return DataViewState.loading;
     }
@@ -143,8 +121,8 @@ export const ConsoleDataView = <
     return undefined;
   }, [filteredData.length, loaded]);
 
-  const dataViewFilterNodes = React.useMemo<React.ReactNode[]>(() => {
-    const basicFilters: React.ReactNode[] = [];
+  const dataViewFilterNodes = useMemo<React.ReactNode[]>(() => {
+    const basicFilters: ReactNode[] = [];
 
     if (!hideNameLabelFilters) {
       basicFilters.push(
@@ -213,11 +191,18 @@ export const ConsoleDataView = <
               </ResponsiveActions>
             )
           }
-          pagination={<Pagination itemCount={filteredData.length} {...pagination} />}
+          pagination={
+            <Pagination
+              itemCount={filteredData.length}
+              titles={{ ofWord: t('public~of') }}
+              {...pagination}
+            />
+          }
         />
         <InnerScrollContainer>
           <DataViewTable
             aria-label={t(`public~{{label}} table`, { label })}
+            // @ts-expect-error - TODO(react18): CONSOLE-5040: Remove ConsoleDataViewColumn bodge
             columns={dataViewColumns}
             rows={dataViewRows}
             bodyStates={{ empty: bodyEmpty, loading: bodyLoading }}
@@ -253,5 +238,3 @@ export const actionsCellProps = {
   hasLeftBorder: true,
   isActionCell: true,
 };
-
-export const initialFiltersDefault = { name: '', label: '' };

@@ -1,7 +1,7 @@
 import * as _ from 'lodash';
 import * as semver from 'semver';
 import { subscribeToDynamicPlugins } from '@console/plugin-sdk/src/api/pluginSubscriptionService';
-import { StandardConsolePluginManifest } from '../build-types';
+import { ConsolePluginManifest } from '../build-types';
 import { CustomError } from '../utils/error/custom-error';
 import { getPluginID } from './plugin-utils';
 
@@ -33,7 +33,7 @@ const formatUnmetDependency = (depName: string, requiredRange: string, currentVe
  * the semver version properly. In that case, the corresponding dependency check will be skipped.
  */
 export const resolvePluginDependencies = (
-  manifest: StandardConsolePluginManifest,
+  manifest: ConsolePluginManifest,
   consolePluginAPIVersion: string,
   allowedPluginNames: string[],
 ) => {
@@ -119,14 +119,14 @@ export const resolvePluginDependencies = (
 
     const unsubListener = subscribeToDynamicPlugins((entries) => {
       const loadedPlugins = entries.reduce<Record<string, string>>((acc, e) => {
-        if (e.status === 'Loaded' && preloadPluginNames.includes(e.metadata.name)) {
+        if (e.status === 'loaded' && preloadPluginNames.includes(e.metadata.name)) {
           acc[e.metadata.name] = e.metadata.version;
         }
         return acc;
       }, {});
 
       const failedPluginNames = entries.reduce<string[]>((acc, e) => {
-        if (e.status === 'Failed' && preloadPluginNames.includes(e.pluginName)) {
+        if (e.status === 'failed' && preloadPluginNames.includes(e.pluginName)) {
           acc.push(e.pluginName);
         }
         return acc;

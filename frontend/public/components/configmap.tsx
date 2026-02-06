@@ -1,4 +1,5 @@
-import * as _ from 'lodash-es';
+import type { FC } from 'react';
+import * as _ from 'lodash';
 import { Suspense, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import PaneBody from '@console/shared/src/components/layout/PaneBody';
@@ -19,7 +20,6 @@ import {
   actionsCellProps,
   cellIsStickyProps,
   getNameCellProps,
-  initialFiltersDefault,
   ConsoleDataView,
 } from '@console/app/src/components/data-view/ConsoleDataView';
 import { GetDataViewRows } from '@console/app/src/components/data-view/types';
@@ -37,7 +37,7 @@ const tableColumnInfo = [
   { id: 'actions' },
 ];
 
-const getDataViewRows: GetDataViewRows<ConfigMapKind, undefined> = (data, columns) => {
+const getDataViewRows: GetDataViewRows<ConfigMapKind> = (data, columns) => {
   return data.map(({ obj: configMap }) => {
     const { name, namespace } = configMap.metadata;
 
@@ -127,7 +127,7 @@ const useConfigMapsColumns = (): TableColumn<ConfigMapKind>[] => {
   );
 };
 
-export const ConfigMaps: React.FCC<ConfigMapsProps> = ({ data, loaded, ...props }) => {
+export const ConfigMaps: FC<ConfigMapsProps> = ({ data, loaded, ...props }) => {
   const columns = useConfigMapsColumns();
 
   return (
@@ -138,7 +138,6 @@ export const ConfigMaps: React.FCC<ConfigMapsProps> = ({ data, loaded, ...props 
         data={data}
         loaded={loaded}
         columns={columns}
-        initialFilters={initialFiltersDefault}
         getDataViewRows={getDataViewRows}
         hideColumnManagement={true}
       />
@@ -146,7 +145,7 @@ export const ConfigMaps: React.FCC<ConfigMapsProps> = ({ data, loaded, ...props 
   );
 };
 
-export const ConfigMapsPage: React.FCC<ConfigMapsPageProps> = (props) => {
+export const ConfigMapsPage: FC<ConfigMapsPageProps> = (props) => {
   const createProps = {
     to: `/k8s/ns/${props.namespace || 'default'}/configmaps/~new/form`,
   };
@@ -162,7 +161,7 @@ export const ConfigMapsPage: React.FCC<ConfigMapsPageProps> = (props) => {
   );
 };
 
-export const ConfigMapsDetailsPage: React.FCC = (props) => {
+export const ConfigMapsDetailsPage: FC = (props) => {
   const { t } = useTranslation();
   const ConfigMapDetails = ({ obj: configMap }: { obj: ConfigMapKind }) => {
     return (

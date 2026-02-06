@@ -1,5 +1,6 @@
-import * as React from 'react';
-import * as _ from 'lodash-es';
+import type { FC } from 'react';
+import { useState, useEffect } from 'react';
+import * as _ from 'lodash';
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom-v5-compat';
 import {
@@ -90,14 +91,14 @@ const useConfigResources = () => {
   return [adjustedConfigResources, clusterOperatorConfigResources];
 };
 
-export const GlobalConfigPage: React.FCC = () => {
+export const GlobalConfigPage: FC = () => {
   const { t } = useTranslation();
   const [globalConfigs] = useResolvedExtensions<ClusterGlobalConfig>(isClusterGlobalConfig);
   const [configResources, clusterOperatorConfigResources] = useConfigResources();
-  const [errors, setErrors] = React.useState([]);
-  const [items, setItems] = React.useState([]);
-  const [loading, setLoading] = React.useState(true);
-  const [textFilter, setTextFilter] = React.useState('');
+  const [errors, setErrors] = useState([]);
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [textFilter, setTextFilter] = useState('');
 
   const oauthMenuItems = _.map(IDP_TYPES, (label: string, id: string) => ({
     label: t('public~{{label}}', { label }),
@@ -112,7 +113,7 @@ export const GlobalConfigPage: React.FCC = () => {
     href: apiExplorerLink,
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     let isSubscribed = true;
     Promise.all(
       [...configResources, ...clusterOperatorConfigResources].map((model: K8sKind) => {

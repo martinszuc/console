@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { ReactNode, FC } from 'react';
+import { useState, useCallback } from 'react';
 import { Button, DescriptionList, Grid, GridItem } from '@patternfly/react-core';
 import { css } from '@patternfly/react-styles';
 import { sortable } from '@patternfly/react-table';
@@ -18,14 +19,12 @@ import {
 } from '@console/internal/components/factory';
 import {
   Firehose,
-  Kebab,
   LoadingBox,
   ConsoleEmptyState,
   navFactory,
   ResourceLink,
   SectionHeading,
   asAccessReview,
-  KebabOption,
   ResourceSummary,
   DetailsItem,
   FirehoseResult,
@@ -33,7 +32,9 @@ import {
 import i18n from '@console/internal/i18n';
 import { ConfigMapModel } from '@console/internal/models';
 import { referenceForModel, K8sKind, k8sPatch, K8sModel } from '@console/internal/module/k8s';
-import LazyActionMenu from '@console/shared/src/components/actions/LazyActionMenu';
+import LazyActionMenu, {
+  KEBAB_COLUMN_CLASS,
+} from '@console/shared/src/components/actions/LazyActionMenu';
 import { ActionMenuVariant } from '@console/shared/src/components/actions/types';
 import { withFallback } from '@console/shared/src/components/error';
 import PaneBody from '@console/shared/src/components/layout/PaneBody';
@@ -53,11 +54,7 @@ import { RegistryPollIntervalDetailItem } from './registry-poll-interval-details
 
 const catalogSourceModelReference = referenceForModel(CatalogSourceModel);
 
-const enableSource = (
-  kind: K8sKind,
-  operatorHub: OperatorHubKind,
-  sourceName: string,
-): KebabOption => ({
+const enableSource = (kind: K8sKind, operatorHub: OperatorHubKind, sourceName: string) => ({
   // t('olm~Enable')
   labelKey: 'olm~Enable',
   callback: () => {
@@ -84,7 +81,7 @@ const getOperatorCount = (
       p.status?.catalogSourceNamespace === catalogSource.metadata.namespace,
   ).length;
 
-const getEndpoint = (catalogSource: CatalogSourceKind): React.ReactNode => {
+const getEndpoint = (catalogSource: CatalogSourceKind): ReactNode => {
   if (catalogSource.spec.configmap) {
     return (
       <ResourceLink
@@ -97,7 +94,7 @@ const getEndpoint = (catalogSource: CatalogSourceKind): React.ReactNode => {
   return catalogSource.spec.image || catalogSource.spec.address;
 };
 
-export const CatalogSourceDetails: React.FC<CatalogSourceDetailsProps> = ({
+export const CatalogSourceDetails: FC<CatalogSourceDetailsProps> = ({
   obj: catalogSource,
   packageManifests,
 }) => {
@@ -170,11 +167,11 @@ export const CatalogSourceDetails: React.FC<CatalogSourceDetailsProps> = ({
   );
 };
 
-export const CatalogSourceOperatorsPage: React.FC<CatalogSourceOperatorsPageProps> = (props) => {
+export const CatalogSourceOperatorsPage: FC<CatalogSourceOperatorsPageProps> = (props) => {
   return <PackageManifestsPage catalogSource={props.obj} showTitle={false} {...props} />;
 };
 
-export const CatalogSourceDetailsPage: React.FC = (props) => {
+export const CatalogSourceDetailsPage: FC = (props) => {
   const { t } = useTranslation();
   const params = useParams();
 
@@ -215,7 +212,7 @@ export const CatalogSourceDetailsPage: React.FC = (props) => {
   );
 };
 
-export const CreateSubscriptionYAML: React.FC = (props) => {
+export const CreateSubscriptionYAML: FC = (props) => {
   type CreateProps = {
     packageManifest: { loaded: boolean; data?: PackageManifestKind };
     operatorGroup: { loaded: boolean; data?: OperatorGroupKind[] };
@@ -291,7 +288,7 @@ const tableColumnClasses = [
   css('pf-m-hidden', 'pf-m-visible-on-xl'),
   css('pf-m-hidden', 'pf-m-visible-on-xl'),
   css('pf-m-hidden', 'pf-m-visible-on-lg'),
-  Kebab.columnClass,
+  KEBAB_COLUMN_CLASS,
 ];
 
 const getRowProps = (obj) => ({
@@ -300,7 +297,7 @@ const getRowProps = (obj) => ({
     : undefined,
 });
 
-const CatalogSourceTableRow: React.FC<RowFunctionArgs<CatalogSourceTableRowObj>> = ({
+const CatalogSourceTableRow: FC<RowFunctionArgs<CatalogSourceTableRowObj>> = ({
   obj: {
     availability = '-',
     endpoint = '-',
@@ -344,7 +341,7 @@ const CatalogSourceTableRow: React.FC<RowFunctionArgs<CatalogSourceTableRowObj>>
   </>
 );
 
-const CatalogSourceList: React.FC<TableProps> = (props) => {
+const CatalogSourceList: FC<TableProps> = (props) => {
   const { t } = useTranslation();
   const CatalogSourceHeader = () => {
     return [
@@ -407,12 +404,12 @@ const CatalogSourceList: React.FC<TableProps> = (props) => {
   );
 };
 
-const DisabledPopover: React.FC<DisabledPopoverProps> = ({ operatorHub, sourceName }) => {
-  const [visible, setVisible] = React.useState<boolean>(null);
-  const close = React.useCallback(() => {
+const DisabledPopover: FC<DisabledPopoverProps> = ({ operatorHub, sourceName }) => {
+  const [visible, setVisible] = useState<boolean>(null);
+  const close = useCallback(() => {
     setVisible(false);
   }, []);
-  const onClickEnable = React.useCallback(
+  const onClickEnable = useCallback(
     () => enableSource(OperatorHubModel, operatorHub, sourceName).callback().then(close),
     [close, operatorHub, sourceName],
   );
@@ -426,7 +423,7 @@ const DisabledPopover: React.FC<DisabledPopoverProps> = ({ operatorHub, sourceNa
     >
       <p>
         {t(
-          'olm~Operators provided by this source will not appear in OperatorHub and any operators installed from this source will not receive updates until this source is re-enabled.',
+          'olm~Operators provided by this source will not appear in Software Catalog and any operators installed from this source will not receive updates until this source is re-enabled.',
         )}
       </p>
       <Button isInline variant="link" onClick={onClickEnable}>
@@ -500,7 +497,7 @@ const flatten = ({
   );
 };
 
-export const CatalogSourceListPage: React.FC<CatalogSourceListPageProps> = (props) => {
+export const CatalogSourceListPage: FC<CatalogSourceListPageProps> = (props) => {
   const { t } = useTranslation();
   return (
     <MultiListPage
@@ -530,9 +527,9 @@ export const CatalogSourceListPage: React.FC<CatalogSourceListPageProps> = (prop
 };
 
 type CatalogSourceTableRowObj = {
-  availability: React.ReactNode;
+  availability: ReactNode;
   disabled?: boolean;
-  endpoint?: React.ReactNode;
+  endpoint?: ReactNode;
   isDefault?: boolean;
   name: string;
   namespace: string;

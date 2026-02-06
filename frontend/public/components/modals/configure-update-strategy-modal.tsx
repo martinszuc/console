@@ -1,5 +1,6 @@
-import * as _ from 'lodash-es';
+import * as _ from 'lodash';
 import { useCallback, useState } from 'react';
+import type { FC } from 'react';
 import {
   FormGroup,
   FormHelperText,
@@ -14,10 +15,16 @@ import {
   Tooltip,
 } from '@patternfly/react-core';
 import { useTranslation } from 'react-i18next';
-
+import { OverlayComponent } from '@console/dynamic-plugin-sdk/src/app/modal-support/OverlayProvider';
 import { k8sPatch, Patch, DeploymentUpdateStrategy, K8sResourceKind } from '../../module/k8s';
 import { DeploymentModel } from '../../models';
-import { createModalLauncher, ModalTitle, ModalBody, ModalSubmitFooter } from '../factory/modal';
+import {
+  ModalTitle,
+  ModalBody,
+  ModalSubmitFooter,
+  ModalWrapper,
+  ModalComponentProps,
+} from '../factory/modal';
 import { usePromiseHandler } from '@console/shared/src/hooks/promise-handler';
 
 export const getNumberOrPercent = (value) => {
@@ -31,7 +38,7 @@ export const getNumberOrPercent = (value) => {
   return _.toInteger(value);
 };
 
-export const ConfigureUpdateStrategy: React.FC<ConfigureUpdateStrategyProps> = ({
+export const ConfigureUpdateStrategy: FC<ConfigureUpdateStrategyProps> = ({
   showDescription = true,
   strategyType,
   uid,
@@ -215,7 +222,19 @@ export const ConfigureUpdateStrategyModal = ({
   );
 };
 
-export const configureUpdateStrategyModal = createModalLauncher(ConfigureUpdateStrategyModal);
+export const ConfigureUpdateStrategyModalOverlay: OverlayComponent<ConfigureUpdateStrategyModalProps> = (
+  props,
+) => {
+  return (
+    <ModalWrapper blocking onClose={props.closeOverlay}>
+      <ConfigureUpdateStrategyModal
+        {...props}
+        cancel={props.closeOverlay}
+        close={props.closeOverlay}
+      />
+    </ModalWrapper>
+  );
+};
 
 export type ConfigureUpdateStrategyProps = {
   showDescription?: boolean;
@@ -231,8 +250,6 @@ export type ConfigureUpdateStrategyProps = {
 
 export type ConfigureUpdateStrategyModalProps = {
   deployment: K8sResourceKind;
-  cancel?: () => void;
-  close?: () => void;
-};
+} & ModalComponentProps;
 
 ConfigureUpdateStrategy.displayName = 'ConfigureUpdateStrategy';

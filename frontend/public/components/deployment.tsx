@@ -1,10 +1,11 @@
+import type { FC } from 'react';
 import ActionServiceProvider from '@console/shared/src/components/actions/ActionServiceProvider';
 import ActionMenu from '@console/shared/src/components/actions/menu/ActionMenu';
 import { ActionMenuVariant } from '@console/shared/src/components/actions/types';
 import PodRingSet from '@console/shared/src/components/pod/PodRingSet';
 import { Status } from '@console/shared/src/components/status/Status';
 import { usePrometheusGate } from '@console/shared/src/hooks/usePrometheusGate';
-import * as React from 'react';
+import { Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { GetDataViewRows } from '@console/app/src/components/data-view/types';
@@ -26,10 +27,7 @@ import { ResourceEventStream } from './events';
 import { DetailsPage } from './factory/details';
 import { ListPage } from './factory/list-page';
 import { ReplicaSetsPage } from './replicaset';
-import {
-  initialFiltersDefault,
-  ConsoleDataView,
-} from '@console/app/src/components/data-view/ConsoleDataView';
+import { ConsoleDataView } from '@console/app/src/components/data-view/ConsoleDataView';
 import { LoadingBox } from './utils/status-box';
 import { AsyncComponent } from './utils/async';
 import { ContainerTable } from './utils/container-table';
@@ -43,7 +41,7 @@ import { WorkloadTableHeader, getWorkloadDataViewRows, useWorkloadColumns } from
 
 const kind = referenceForModel(DeploymentModel);
 
-export const DeploymentDetailsList: React.FCC<DeploymentDetailsListProps> = ({ deployment }) => {
+export const DeploymentDetailsList: FC<DeploymentDetailsListProps> = ({ deployment }) => {
   const { t } = useTranslation();
   return (
     <DescriptionList>
@@ -98,7 +96,7 @@ export const DeploymentDetailsList: React.FCC<DeploymentDetailsListProps> = ({ d
 };
 DeploymentDetailsList.displayName = 'DeploymentDetailsList';
 
-const DeploymentDetails: React.FCC<DeploymentDetailsProps> = ({ obj: deployment }) => {
+const DeploymentDetails: FC<DeploymentDetailsProps> = ({ obj: deployment }) => {
   const { t } = useTranslation();
 
   return (
@@ -146,7 +144,7 @@ DeploymentDetails.displayName = 'DeploymentDetails';
 
 const EnvironmentPage = (props) => (
   <AsyncComponent
-    loader={() => import('./environment.jsx').then((c) => c.EnvironmentPage)}
+    loader={() => import('./environment').then((c) => c.EnvironmentPage)}
     {...props}
   />
 );
@@ -161,7 +159,7 @@ const environmentComponent = (props) => (
   />
 );
 
-const ReplicaSetsTab: React.FCC<ReplicaSetsTabProps> = ({ obj }) => {
+const ReplicaSetsTab: FC<ReplicaSetsTabProps> = ({ obj }) => {
   const {
     metadata: { namespace },
     spec: { selector },
@@ -178,7 +176,7 @@ const ReplicaSetsTab: React.FCC<ReplicaSetsTabProps> = ({ obj }) => {
   );
 };
 
-export const DeploymentsDetailsPage: React.FCC = (props) => {
+export const DeploymentsDetailsPage: FC = (props) => {
   const prometheusIsAvailable = usePrometheusGate();
   const customActionMenu = (kindObj, obj) => {
     const resourceKind = referenceForModel(kindObj);
@@ -223,30 +221,29 @@ const DeploymentTableHeader = () => {
 };
 DeploymentTableHeader.displayName = 'DeploymentTableHeader';
 
-const getDataViewRows: GetDataViewRows<DeploymentKind, undefined> = (data, columns) => {
+const getDataViewRows: GetDataViewRows<DeploymentKind> = (data, columns) => {
   return getWorkloadDataViewRows(data, columns, DeploymentModel);
 };
 
-export const DeploymentsList: React.FCC<DeploymentsListProps> = ({ data, loaded, ...props }) => {
+export const DeploymentsList: FC<DeploymentsListProps> = ({ data, loaded, ...props }) => {
   const columns = useWorkloadColumns<DeploymentKind>();
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView
         {...props}
         label={DeploymentModel.labelPlural}
         data={data}
         loaded={loaded}
         columns={columns}
-        initialFilters={initialFiltersDefault}
         getDataViewRows={getDataViewRows}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 DeploymentsList.displayName = 'DeploymentsList';
 
-export const DeploymentsPage: React.FCC<DeploymentsPageProps> = (props) => {
+export const DeploymentsPage: FC<DeploymentsPageProps> = (props) => {
   const createProps = {
     to: `/k8s/ns/${props.namespace || 'default'}/deployments/~new/form`,
   };

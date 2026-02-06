@@ -1,11 +1,12 @@
-import * as React from 'react';
+import type { ComponentType, FC, ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import * as _ from 'lodash-es';
+import * as _ from 'lodash';
 import { Button, DescriptionList } from '@patternfly/react-core';
 import { PencilAltIcon } from '@patternfly/react-icons/dist/esm/icons/pencil-alt-icon';
 import { useCanClusterUpgrade } from '@console/shared/src/hooks/useCanClusterUpgrade';
 import { useAnnotationsModal } from '@console/shared/src/hooks/useAnnotationsModal';
 import { useLabelsModal } from '@console/shared/src/hooks/useLabelsModal';
+import { useOverlay } from '@console/dynamic-plugin-sdk/src/app/modal-support/useOverlay';
 import { DetailsItem } from './details-item';
 import { LabelList } from './label-list';
 import { OwnerReferences } from './owner-references';
@@ -21,7 +22,7 @@ import {
   referenceFor,
   Toleration,
 } from '../../module/k8s';
-import { configureClusterUpstreamModal } from '../modals';
+import { LazyConfigureClusterUpstreamModalOverlay } from '../modals';
 import { CommonActionCreator } from '@console/app/src/actions/hooks/types';
 import { useCommonActions } from '@console/app/src/actions/hooks/useCommonActions';
 
@@ -35,7 +36,7 @@ export const pluralize = (
   return includeCount ? `${i || 0} ${pluralized}` : pluralized;
 };
 
-export const detailsPage = <T extends {}>(Component: React.ComponentType<T>) =>
+export const detailsPage = <T extends {}>(Component: ComponentType<T>) =>
   function DetailsPage(props: T) {
     return <Component {...props} />;
   };
@@ -45,7 +46,7 @@ const getTolerationsPath = (obj: K8sResourceKind): string => {
   return obj.kind === 'Pod' ? 'spec.tolerations' : 'spec.template.spec.tolerations';
 };
 
-export const ResourceSummary: React.FC<ResourceSummaryProps> = ({
+export const ResourceSummary: FC<ResourceSummaryProps> = ({
   children,
   resource,
   customPathName,
@@ -171,7 +172,7 @@ export const ResourceSummary: React.FC<ResourceSummaryProps> = ({
   );
 };
 
-export const ResourcePodCount: React.FCC<ResourcePodCountProps> = ({ resource }) => {
+export const ResourcePodCount: FC<ResourcePodCountProps> = ({ resource }) => {
   const { t } = useTranslation();
   return (
     <>
@@ -191,7 +192,7 @@ export const ResourcePodCount: React.FCC<ResourcePodCountProps> = ({ resource })
   );
 };
 
-export const RuntimeClass: React.FC<RuntimeClassProps> = ({ obj, path }) => {
+export const RuntimeClass: FC<RuntimeClassProps> = ({ obj, path }) => {
   const { t } = useTranslation();
   return (
     <DetailsItem
@@ -203,11 +204,10 @@ export const RuntimeClass: React.FC<RuntimeClassProps> = ({ obj, path }) => {
   );
 };
 
-export const UpstreamConfigDetailsItem: React.FCC<UpstreamConfigDetailsItemProps> = ({
-  resource,
-}) => {
+export const UpstreamConfigDetailsItem: FC<UpstreamConfigDetailsItemProps> = ({ resource }) => {
   const { t } = useTranslation();
   const canUpgrade = useCanClusterUpgrade();
+  const launchModal = useOverlay();
   return (
     <DetailsItem label={t('public~Upstream configuration')} obj={resource} path="spec.upstream">
       <div>
@@ -218,7 +218,7 @@ export const UpstreamConfigDetailsItem: React.FCC<UpstreamConfigDetailsItemProps
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            canUpgrade && configureClusterUpstreamModal({ cv: resource });
+            canUpgrade && launchModal(LazyConfigureClusterUpstreamModalOverlay, { cv: resource });
           }}
           variant="link"
           isDisabled={!canUpgrade}
@@ -242,7 +242,7 @@ export type ResourceSummaryProps = {
   canUpdateResource?: boolean;
   podSelector?: string;
   nodeSelector?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
   customPathName?: string;
 };
 

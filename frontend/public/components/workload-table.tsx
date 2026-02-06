@@ -1,3 +1,4 @@
+import type { FC } from 'react';
 import {
   actionsCellProps,
   cellIsStickyProps,
@@ -10,16 +11,17 @@ import {
 import { K8sModel } from '@console/dynamic-plugin-sdk/src/api/common-types';
 import { RowProps, TableColumn } from '@console/dynamic-plugin-sdk/src/extensions/console-types';
 import { getGroupVersionKindForModel } from '@console/dynamic-plugin-sdk/src/utils/k8s/k8s-ref';
-import LazyActionMenu from '@console/shared/src/components/actions/LazyActionMenu';
+import LazyActionMenu, {
+  KEBAB_COLUMN_CLASS,
+} from '@console/shared/src/components/actions/LazyActionMenu';
 import { DASH } from '@console/shared/src/constants/ui';
 import { css } from '@patternfly/react-styles';
 import { sortable } from '@patternfly/react-table';
 import i18next from 'i18next';
-import * as React from 'react';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom-v5-compat';
 import { K8sResourceKind, referenceForModel } from '../module/k8s';
-import { Kebab } from './utils/kebab';
 import { LabelList } from './utils/label-list';
 import { ResourceLink, resourcePath } from './utils/resource-link';
 import { Selector } from './utils/selector';
@@ -30,7 +32,7 @@ const tableColumnClasses = [
   css('pf-m-hidden', 'pf-m-visible-on-sm', 'pf-v6-u-w-16-on-lg'),
   css('pf-m-hidden', 'pf-m-visible-on-lg'),
   css('pf-m-hidden', 'pf-m-visible-on-lg'),
-  Kebab.columnClass,
+  KEBAB_COLUMN_CLASS,
 ];
 
 export const WorkloadTableHeader = () => {
@@ -83,13 +85,23 @@ const tableColumnInfo = [
   { id: '' },
 ];
 
-export const ReplicasCount: React.FCC<ReplicasCountProps> = ({ obj, kind }) => {
+export const ReplicasCount: FC<ReplicasCountProps> = ({ obj, kind }) => {
   const { t } = useTranslation();
+
+  // DaemonSets use different status fields than Deployments
+  const isDaemonSet = kind?.includes('DaemonSet');
+  const statusReplicas = isDaemonSet
+    ? obj.status?.currentNumberScheduled ?? 0
+    : obj.status?.replicas ?? 0;
+  const specReplicas = isDaemonSet
+    ? obj.status?.desiredNumberScheduled ?? 0
+    : obj.spec?.replicas ?? 0;
+
   return (
     <Link to={`${resourcePath(kind, obj.metadata.name, obj.metadata.namespace)}/pods`} title="pods">
       {t('public~{{statusReplicas}} of {{specReplicas}} pods', {
-        statusReplicas: obj.status.replicas || 0,
-        specReplicas: obj.spec.replicas,
+        statusReplicas,
+        specReplicas,
       })}
     </Link>
   );
@@ -149,7 +161,7 @@ export const getWorkloadDataViewRows = <T extends K8sResourceKind>(
 
 export const useWorkloadColumns = <T extends K8sResourceKind>(): TableColumn<T>[] => {
   const { t } = useTranslation();
-  const columns = React.useMemo(() => {
+  const columns = useMemo(() => {
     return [
       {
         title: t('public~Name'),

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { FC, ComponentProps } from 'react';
 import { css } from '@patternfly/react-styles';
 import {
   Edge,
@@ -10,34 +10,19 @@ import {
   EdgeTerminalType,
   WithSourceDragProps,
   WithTargetDragProps,
-  NodeStatus,
-  GraphElement,
 } from '@patternfly/react-topology';
 import { useAccessReviewAllowed } from '@console/dynamic-plugin-sdk';
 import { referenceFor, modelFor } from '@console/internal/module/k8s';
 import { getResource } from '../../../../utils/topology-utils';
 import './BaseEdge.scss';
 
-type BaseEdgeProps = {
-  element: GraphElement;
-  dragging?: boolean;
-  className?: string;
-  animationDuration?: number;
-  startTerminalType?: EdgeTerminalType;
-  startTerminalClass?: string;
-  startTerminalStatus?: NodeStatus;
-  endTerminalType?: EdgeTerminalType;
-  endTerminalClass?: string;
-  endTerminalStatus?: NodeStatus;
-  tag?: string;
-  tagClass?: string;
-  tagStatus?: NodeStatus;
-} & WithRemoveConnectorProps &
+type BaseEdgeProps = ComponentProps<typeof DefaultEdge> &
+  WithRemoveConnectorProps &
   Partial<WithSourceDragProps> &
   Partial<WithTargetDragProps> &
   Partial<WithContextMenuProps>;
 
-const BaseEdge: React.FC<BaseEdgeProps> = ({
+const BaseEdge: FC<BaseEdgeProps> = ({
   className,
   element,
   endTerminalType = EdgeTerminalType.directional,
@@ -75,4 +60,4 @@ const BaseEdge: React.FC<BaseEdgeProps> = ({
   );
 };
 
-export default observer(BaseEdge);
+export default observer<typeof BaseEdge>(BaseEdge);

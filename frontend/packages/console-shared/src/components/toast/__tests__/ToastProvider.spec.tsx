@@ -1,6 +1,5 @@
-import * as React from 'react';
-import { screen, fireEvent, waitFor } from '@testing-library/react';
-import { act } from 'react-dom/test-utils';
+import { useContext } from 'react';
+import { act, screen, fireEvent, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../../../test-utils/unit-test-utils';
 import ToastContext, { ToastContextType, ToastVariant } from '../ToastContext';
 import ToastProvider from '../ToastProvider';
@@ -9,7 +8,7 @@ describe('ToastProvider', () => {
   let toastContext: ToastContextType;
 
   const TestComponent = () => {
-    toastContext = React.useContext(ToastContext);
+    toastContext = useContext(ToastContext);
     return null;
   };
 

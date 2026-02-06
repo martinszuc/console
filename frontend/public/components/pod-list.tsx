@@ -30,7 +30,7 @@ import type { TableColumnsType } from '@console/shared/src/types/tableColumn';
 import { Button, Content, ContentVariants, Divider, Popover } from '@patternfly/react-core';
 import { DataViewCheckboxFilter } from '@patternfly/react-data-view';
 import { DataViewFilterOption } from '@patternfly/react-data-view/dist/cjs/DataViewFilters';
-import * as _ from 'lodash-es';
+import * as _ from 'lodash';
 import { useEffect, useMemo, FC, ReactNode, Suspense, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useDispatch, useSelector } from 'react-redux';
@@ -54,7 +54,6 @@ import { sortResourceByValue } from './factory/Table/sort';
 import { PROMETHEUS_BASE_PATH, PROMETHEUS_TENANCY_BASE_PATH } from './graphs/consts';
 import { PodTraffic } from './pod-traffic';
 import { useK8sWatchResource } from './utils/k8s-watch-hook';
-import { Kebab } from './utils/kebab';
 import { LabelList } from './utils/label-list';
 import { OwnerReferences } from './utils/owner-references';
 import { ResourceLink, resourcePath } from './utils/resource-link';
@@ -96,8 +95,6 @@ const fetchPodMetrics = (namespace: string): Promise<UIActions.PodMetrics> => {
   );
   return Promise.all(promises).then((data: unknown[]) => _.assign({}, ...data));
 };
-
-export const menuActions = [...(Kebab.factory.common || [])];
 
 const tableColumnInfo = [
   { id: 'name' },
@@ -448,10 +445,13 @@ export const PodList: FC<PodListProps> = ({
 }) => {
   const { t } = useTranslation();
   const columns = usePodsColumns(showNodes);
+
   const podMetrics = useSelector<RootState, UIActions.PodMetrics>(({ UI }) => {
     return UI.getIn(['metrics', 'pod']);
   });
+
   const columnManagementID = referenceForModel(PodModel);
+
   const columnLayout = useMemo<ColumnLayout>(
     () => ({
       id: columnManagementID,
@@ -469,6 +469,7 @@ export const PodList: FC<PodListProps> = ({
     }),
     [columns, columnManagementID, selectedColumns, showNamespaceOverride, t],
   );
+
   const podStatusFilterOptions = useMemo<DataViewFilterOption[]>(
     () => [
       {
@@ -505,11 +506,13 @@ export const PodList: FC<PodListProps> = ({
     [t],
   );
 
+  const initialFilters = useMemo(() => ({ ...initialFiltersDefault, status: [] }), []);
+
   const additionalFilterNodes = useMemo<ReactNode[]>(
     () => [
       <DataViewCheckboxFilter
         key="status"
-        filterId="status" // is `rowFilter-pod-status`in <FilterToolbar> as a single param, not multiple
+        filterId="status"
         title={t('public~Status')}
         placeholder={t('public~Filter by status')}
         options={podStatusFilterOptions}
@@ -517,6 +520,7 @@ export const PodList: FC<PodListProps> = ({
     ],
     [t, podStatusFilterOptions],
   );
+
   const matchesAdditionalFilters = useCallback(
     (resource: PodKind, filters: PodFilters) =>
       filters.status.length === 0 ||
@@ -540,7 +544,7 @@ export const PodList: FC<PodListProps> = ({
         columns={columns}
         columnLayout={columnLayout}
         columnManagementID={columnManagementID}
-        initialFilters={{ ...initialFiltersDefault, status: [] }}
+        initialFilters={initialFilters}
         additionalFilterNodes={additionalFilterNodes}
         matchesAdditionalFilters={matchesAdditionalFilters}
         getDataViewRows={(rowData, tableColumns) =>

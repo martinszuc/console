@@ -1,5 +1,6 @@
-import * as _ from 'lodash-es';
-import * as React from 'react';
+import * as _ from 'lodash';
+import type { FC } from 'react';
+import { useMemo, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { TFunction } from 'i18next';
 import {
@@ -22,7 +23,6 @@ import {
   actionsCellProps,
   cellIsStickyProps,
   getNameCellProps,
-  initialFiltersDefault,
   ConsoleDataView,
 } from '@console/app/src/components/data-view/ConsoleDataView';
 import { GetDataViewRows } from '@console/app/src/components/data-view/types';
@@ -43,7 +43,7 @@ import LazyActionMenu from '@console/shared/src/components/actions/LazyActionMen
 
 export const machineConfigReference = referenceForModel(MachineConfigModel);
 
-const MachineConfigSummary: React.FCC<MachineConfigSummaryProps> = ({ obj, t }) => (
+const MachineConfigSummary: FC<MachineConfigSummaryProps> = ({ obj, t }) => (
   <ResourceSummary resource={obj}>
     <DescriptionListGroup>
       <DescriptionListTerm>{t('public~OS image URL')}</DescriptionListTerm>
@@ -52,7 +52,7 @@ const MachineConfigSummary: React.FCC<MachineConfigSummaryProps> = ({ obj, t }) 
   </ResourceSummary>
 );
 
-const MachineConfigDetails: React.FCC<MachineConfigDetailsProps> = ({ obj }) => {
+const MachineConfigDetails: FC<MachineConfigDetailsProps> = ({ obj }) => {
   const { t } = useTranslation();
   const files = obj.spec.config?.storage?.files;
 
@@ -102,7 +102,7 @@ const MachineConfigDetails: React.FCC<MachineConfigDetailsProps> = ({ obj }) => 
                     <Button
                       icon={<BlueInfoCircleIcon />}
                       variant={ButtonVariant.plain}
-                      aria-label={'public~Info'}
+                      aria-label={t('public~Info')}
                       className="pf-v6-u-ml-sm pf-v6-u-p-0"
                     />
                   </Popover>
@@ -127,7 +127,7 @@ const pages = [
   navFactory.events(ResourceEventStream),
 ];
 
-export const MachineConfigDetailsPage: React.FCC<any> = (props) => {
+export const MachineConfigDetailsPage: FC<any> = (props) => {
   return <DetailsPage {...props} kind={machineConfigReference} pages={pages} />;
 };
 
@@ -140,7 +140,7 @@ const tableColumnInfo = [
   { id: '' },
 ];
 
-const getDataViewRows: GetDataViewRows<MachineConfigKind, undefined> = (data, columns) => {
+const getDataViewRows: GetDataViewRows<MachineConfigKind> = (data, columns) => {
   return data.map(({ obj }) => {
     const { name } = obj.metadata;
 
@@ -194,7 +194,7 @@ const getDataViewRows: GetDataViewRows<MachineConfigKind, undefined> = (data, co
 
 const useMachineConfigColumns = (): TableColumn<MachineConfigKind>[] => {
   const { t } = useTranslation();
-  const columns: TableColumn<MachineConfigKind>[] = React.useMemo(() => {
+  const columns: TableColumn<MachineConfigKind>[] = useMemo(() => {
     return [
       {
         title: t('public~Name'),
@@ -252,16 +252,11 @@ const useMachineConfigColumns = (): TableColumn<MachineConfigKind>[] => {
   return columns;
 };
 
-const MachineConfigList: React.FC<MachineConfigListProps> = ({
-  data,
-  loaded,
-  loadError,
-  ...props
-}) => {
+const MachineConfigList: FC<MachineConfigListProps> = ({ data, loaded, loadError, ...props }) => {
   const columns = useMachineConfigColumns();
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView<MachineConfigKind>
         {...props}
         label={MachineConfigModel.labelPlural}
@@ -269,15 +264,14 @@ const MachineConfigList: React.FC<MachineConfigListProps> = ({
         loaded={loaded}
         loadError={loadError}
         columns={columns}
-        initialFilters={initialFiltersDefault}
         getDataViewRows={getDataViewRows}
         hideColumnManagement={true}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 
-export const MachineConfigPage: React.FCC<any> = ({ canCreate = true, ...rest }) => (
+export const MachineConfigPage: FC<any> = ({ canCreate = true, ...rest }) => (
   <ListPage
     {...rest}
     canCreate={canCreate}

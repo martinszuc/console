@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-use-before-define */
-import * as _ from 'lodash-es';
-import * as React from 'react';
+import * as _ from 'lodash';
+import type { ReactNode } from 'react';
+import { Component } from 'react';
 import * as fuzzy from 'fuzzysearch';
 /* eslint-disable import/named */
 import { WithTranslation, withTranslation } from 'react-i18next';
@@ -14,7 +15,7 @@ import { css } from '@patternfly/react-styles';
 
 /* Component StorageClassDropdown - creates a dropdown list of storage classes */
 
-export class StorageClassDropdownInnerWithTranslation extends React.Component<
+export class StorageClassDropdownInnerWithTranslation extends Component<
   StorageClassDropdownInnerProps,
   StorageClassDropdownInnerState
 > {
@@ -49,7 +50,7 @@ export class StorageClassDropdownInnerWithTranslation extends React.Component<
 
     const state = {
       items: {},
-      title: {},
+      title: undefined,
       defaultClass: '',
     };
     let unorderedItems = {};
@@ -254,17 +255,19 @@ export type StorageClassDropdownInnerState = {
   items: any;
   name: string;
   selectedKey: string;
-  title: React.ReactNode;
+  title: ReactNode;
   defaultClass: string;
 };
 
 export type StorageClassDropdownInnerProps = WithTranslation & {
   id?: string;
   loaded?: boolean;
+  loadError?: any;
   resources?: any;
   name: string;
   onChange: (object) => void;
   describedBy: string;
+  desc?: string;
   defaultClass: string;
   required?: boolean;
   hideClassName?: string;

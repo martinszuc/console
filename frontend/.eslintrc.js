@@ -5,7 +5,6 @@ module.exports = {
   env: {
     browser: true,
     es6: true,
-    jasmine: true,
     jest: true,
     node: true,
   },
@@ -61,6 +60,30 @@ module.exports = {
       { varsIgnorePattern: 'React', args: 'after-used' },
     ],
     '@typescript-eslint/no-use-before-define': 2,
+    'no-restricted-imports': [
+      'error',
+      {
+        paths: [
+          {
+            name: 'lodash-es',
+            message: 'Use lodash instead. webpack is configured to use lodash-es automatically.',
+          },
+          {
+            name: 'react',
+            importNames: ['default', '*'],
+            // Future ESM-only React versions will remove the default export,
+            // and namespace imports may negatively impact tree-shaking
+            message: 'Use named imports instead.',
+          },
+          {
+            name: 'react',
+            importNames: ['act'],
+            // https://testing-library.com/docs/react-testing-library/api/#act
+            message: "For consistency, import { act } from '@testing-library/react'",
+          },
+        ],
+      },
+    ],
     'no-var': 2,
     'object-shorthand': ['error', 'properties'],
     'prefer-const': ['error', { destructuring: 'all' }],

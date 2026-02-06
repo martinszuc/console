@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC, ReactNode, ComponentType } from 'react';
+import { useCallback } from 'react';
 import { Button, ButtonVariant } from '@patternfly/react-core';
 import { useTranslation } from 'react-i18next';
 import { Link, useNavigate } from 'react-router-dom-v5-compat';
@@ -7,6 +8,7 @@ import { AlertItemProps } from '@console/dynamic-plugin-sdk/src/api/internal-typ
 import { useModal } from '@console/dynamic-plugin-sdk/src/lib-core';
 import { alertURL } from '@console/internal/components/monitoring/utils';
 import { getAlertActions } from '@console/internal/components/notification-drawer';
+import { LinkifyExternal } from '@console/internal/components/utils/link';
 import { Timestamp } from '@console/shared/src/components/datetime/Timestamp';
 import { ExternalLink } from '@console/shared/src/components/links/ExternalLink';
 import {
@@ -47,7 +49,7 @@ const getSeverityIcon = (severity: string) => {
   }
 };
 
-export const StatusItem: React.FC<StatusItemProps> = ({
+export const StatusItem: FC<StatusItemProps> = ({
   name,
   documentationLink,
   Icon,
@@ -72,7 +74,9 @@ export const StatusItem: React.FC<StatusItemProps> = ({
               <Timestamp simple timestamp={timestamp} />
             </div>
           )}
-          <span className="co-status-card__health-item-text co-break-word">{message}</span>
+          <span className="co-status-card__health-item-text co-break-word">
+            <LinkifyExternal>{message}</LinkifyExternal>
+          </span>
           {documentationLink && (
             <ExternalLink className="co-status-card__alert-item-doc-link" href={documentationLink}>
               {t('console-shared~Go to documentation')}
@@ -85,11 +89,11 @@ export const StatusItem: React.FC<StatusItemProps> = ({
   );
 };
 
-const AlertItem: React.FC<AlertItemProps> = ({ alert, documentationLink }) => {
+const AlertItem: FC<AlertItemProps> = ({ alert, documentationLink }) => {
   const { t } = useTranslation();
   const launchModal = useModal();
   const [actionExtensions] = useResolvedExtensions<AlertAction>(
-    React.useCallback(
+    useCallback(
       (e): e is AlertAction => isAlertAction(e) && e.properties.alert === alert.rule.name,
       [alert],
     ),
@@ -120,8 +124,8 @@ const AlertItem: React.FC<AlertItemProps> = ({ alert, documentationLink }) => {
 export default AlertItem;
 
 type StatusItemProps = {
-  children?: React.ReactNode;
-  Icon: React.ComponentType<any>;
+  children?: ReactNode;
+  Icon: ComponentType<any>;
   timestamp?: string;
   message: string;
   name?: string;

@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC } from 'react';
+import { useContext, useCallback, useEffect } from 'react';
 import { useFormikContext, FormikValues } from 'formik';
 import * as _ from 'lodash';
 import { useTranslation } from 'react-i18next';
@@ -7,7 +8,7 @@ import { getProjectResource, BuilderImagesNamespace } from '../../../utils/image
 import { ImageStreamActions as Action } from '../import-types';
 import { ImageStreamContext } from './ImageStreamContext';
 
-const ImageStreamNsDropdown: React.FCC<{
+const ImageStreamNsDropdown: FC<{
   disabled?: boolean;
   formContextField?: string;
   className?: string;
@@ -16,9 +17,9 @@ const ImageStreamNsDropdown: React.FCC<{
   const { values, setFieldValue, initialValues } = useFormikContext<FormikValues>();
   const { imageStream } = _.get(values, formContextField) || values;
   const { isi: initialIsi } = _.get(initialValues, formContextField) || initialValues;
-  const { dispatch } = React.useContext(ImageStreamContext);
+  const { dispatch } = useContext(ImageStreamContext);
   const fieldPrefix = formContextField ? `${formContextField}.` : '';
-  const onDropdownChange = React.useCallback(
+  const onDropdownChange = useCallback(
     (ns?: string) => {
       if (ns) {
         setFieldValue(`${fieldPrefix}imageStream.image`, '');
@@ -30,7 +31,7 @@ const ImageStreamNsDropdown: React.FCC<{
     [dispatch, fieldPrefix, initialIsi, setFieldValue],
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     imageStream.namespace && onDropdownChange();
   }, [onDropdownChange, imageStream.namespace]);
 

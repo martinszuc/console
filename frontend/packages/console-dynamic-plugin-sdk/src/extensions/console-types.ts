@@ -1,11 +1,19 @@
-import * as React from 'react';
+import type {
+  ComponentType,
+  ReactNode,
+  ReactText,
+  ReactNodeArray,
+  SetStateAction,
+  Dispatch,
+} from 'react';
 import { QuickStartContextValues } from '@patternfly/quickstarts';
 import { CodeEditorProps as PfCodeEditorProps } from '@patternfly/react-code-editor';
 import { ButtonProps } from '@patternfly/react-core';
 import { ICell, OnSelect, SortByDirection, TableGridBreakpoint } from '@patternfly/react-table';
 import { LocationDescriptor } from 'history';
+import type { TFunction } from 'i18next';
 import type * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
-import {
+import type {
   ExtensionK8sGroupKindModel,
   K8sModel,
   K8sVerb,
@@ -16,7 +24,7 @@ import {
   ResolvedExtension,
   Selector,
 } from '../api/common-types';
-import { Extension, ExtensionTypeGuard } from '../types';
+import type { Extension, ExtensionTypeGuard } from '../types';
 import { CustomDataSource } from './dashboard-data-source';
 
 export type OwnerReference = {
@@ -276,12 +284,14 @@ export type ConsoleFetchJSON<T = any> = {
 
 export type ConsoleFetchText<T = any> = (...args: Parameters<ConsoleFetch>) => Promise<T>;
 
+export type ConsoleTFunction = TFunction | ((key: string, options?: any) => string);
+
 /* Horizontal Nav Types */
 export type NavPage = {
   href?: string;
   path?: string;
   name: string;
-  component: React.ComponentType;
+  component: ComponentType;
 };
 
 export type HorizontalNavProps = {
@@ -314,9 +324,9 @@ export type VirtualizedTableProps<D, R extends any = {}> = {
   loaded: boolean;
   loadError: any;
   columns: TableColumn<D>[];
-  Row: React.ComponentType<RowProps<D, R>>;
-  NoDataEmptyMsg?: React.ComponentType<{}>;
-  EmptyMsg?: React.ComponentType<{}>;
+  Row: ComponentType<RowProps<D, R>>;
+  NoDataEmptyMsg?: ComponentType<{}>;
+  EmptyMsg?: ComponentType<{}>;
   scrollNode?: () => HTMLElement;
   onSelect?: OnSelect;
   allRowsSelected?: boolean;
@@ -340,7 +350,7 @@ export type TableDataProps = {
   id: string;
   activeColumnIDs: Set<string>;
   className?: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
 export type UseActiveColumns = <D = any>({
@@ -355,13 +365,13 @@ export type UseActiveColumns = <D = any>({
 
 export type ListPageHeaderProps = {
   /** A badge that is displayed next to the title of the heading */
-  badge?: React.ReactNode;
+  badge?: ReactNode;
   /** A primary action that is always rendered. */
-  children?: React.ReactNode;
+  children?: ReactNode;
   /** An alert placed below the heading in the same PageSection. */
-  helpAlert?: React.ReactNode;
+  helpAlert?: ReactNode;
   /** A subtitle placed below the title. */
-  helpText?: React.ReactNode;
+  helpText?: ReactNode;
   /**
    * The "Add to favourites" button is shown by default while in the admin perspective.
    * This prop allows you to hide the button. It should be hidden when `ListPageHeader`
@@ -377,26 +387,27 @@ export type CreateWithPermissionsProps = {
     groupVersionKind: K8sResourceKindReference | K8sGroupVersionKind;
     namespace?: string;
   };
+  children?: ReactNode;
 };
 
 export type ListPageCreateProps = CreateWithPermissionsProps & {
   groupVersionKind: K8sResourceKindReference | K8sGroupVersionKind;
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
 export type ListPageCreateLinkProps = CreateWithPermissionsProps & {
   to: string;
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
 export type ListPageCreateButtonProps = CreateWithPermissionsProps & ButtonProps;
 
 export type ListPageCreateDropdownProps = CreateWithPermissionsProps & {
   items: {
-    [key: string]: React.ReactNode;
+    [key: string]: ReactNode;
   };
   onClick: (item: string) => void;
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
 export type RowFilterItem = {
@@ -423,7 +434,7 @@ export type RowMatchFilter<R = any> = RowFilterBase<R> & {
 };
 
 export type RowReducerFilter<R = any> = RowFilterBase<R> & {
-  reducer: (obj: R) => React.ReactText;
+  reducer: (obj: R) => ReactText;
 };
 
 export type RowFilter<R = any> = RowMatchFilter<R> | RowReducerFilter<R>;
@@ -489,8 +500,8 @@ export type ResourceLinkProps = {
   dataTest?: string;
   onClick?: () => void;
   truncate?: boolean;
-  nameSuffix?: React.ReactNode;
-  children?: React.ReactNode;
+  nameSuffix?: ReactNode;
+  children?: ReactNode;
 };
 
 export type ResourceIconProps = {
@@ -553,11 +564,12 @@ export type StatusComponentProps = {
   noTooltip?: boolean;
   className?: string;
   popoverTitle?: string;
+  children?: ReactNode;
 };
 
 export type OverviewProps = {
   className?: string;
-  children: React.ReactNode;
+  children?: ReactNode;
 };
 
 export enum GridPosition {
@@ -569,7 +581,7 @@ export enum GridPosition {
 export type OverviewCardSpan = 4 | 6 | 12;
 
 export type OverviewGridCard = {
-  Card: React.ComponentType<any>;
+  Card: ComponentType<any>;
   span?: OverviewCardSpan;
 };
 
@@ -579,18 +591,22 @@ export type OverviewGridProps = {
   rightCards?: OverviewGridCard[];
 };
 
+export type InventoryItemProps = {
+  children: ReactNode;
+};
+
 export type InventoryItemTitleProps = {
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 export type InventoryItemBodyProps = {
   error?: any;
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
 export type InventoryItemStatusProps = {
   count: number;
-  icon: React.ReactNode;
+  icon: ReactNode;
   linkTo?: string;
 };
 
@@ -664,7 +680,7 @@ export type CodeEditorToolbarProps = {
   /** Whether to show a toolbar with shortcuts on top of the editor. */
   showShortcuts?: boolean;
   /** Toolbar links section on the left side of the editor */
-  toolbarLinks?: React.ReactNodeArray;
+  toolbarLinks?: ReactNodeArray;
 };
 
 // Omit the ref as we have our own ref type, which is completely different
@@ -711,7 +727,7 @@ export type TimestampProps = {
 export type NamespaceBarProps = {
   onNamespaceChange?: (namespace: string) => void;
   isDisabled?: boolean;
-  children?: React.ReactNode;
+  children?: ReactNode;
 };
 
 export type ErrorBoundaryFallbackProps = {
@@ -719,6 +735,7 @@ export type ErrorBoundaryFallbackProps = {
   componentStack: string;
   stack: string;
   title: string;
+  children?: ReactNode;
 };
 
 export type FormatSeriesTitle = (labels: PrometheusLabels, i?: number) => string;
@@ -732,7 +749,7 @@ export type QueryBrowserProps = {
   filterLabels?: PrometheusLabels;
   fixedEndTime?: number;
   formatSeriesTitle?: FormatSeriesTitle;
-  GraphLink?: React.ComponentType<{}>;
+  GraphLink?: ComponentType<{}>;
   hideControls?: boolean;
   isStack?: boolean;
   namespace?: string;
@@ -759,7 +776,7 @@ export type UseDeleteModal = (
   resource: K8sResourceCommon,
   redirectTo?: LocationDescriptor,
   message?: JSX.Element,
-  btnText?: React.ReactNode,
+  btnText?: ReactNode,
   deleteAllResources?: () => Promise<K8sResourceKind[]>,
 ) => () => void;
 
@@ -777,7 +794,7 @@ export type UseUserSettings = <T>(
   key: string,
   defaultValue?: T,
   sync?: boolean,
-) => [T, React.Dispatch<React.SetStateAction<T>>, boolean];
+) => [T, Dispatch<SetStateAction<T>>, boolean];
 
 export type UseQuickStartContext = () => QuickStartContextValues;
 

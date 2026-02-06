@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { ComponentProps } from 'react';
 import { screen } from '@testing-library/react';
 import { useField } from 'formik';
 import * as _ from 'lodash';
@@ -26,7 +26,7 @@ jest.mock('../install-upgrade/HelmChartVersionDropdown', () => ({
   default: () => 'HelmChartVersionDropdown',
 }));
 
-jest.mock('@openshift-console/plugin-shared/src/hooks/useResizeObserver', () => ({
+jest.mock('@console/shared/src/hooks/useResizeObserver', () => ({
   useResizeObserver: jest.fn(),
 }));
 
@@ -110,7 +110,7 @@ const componentProps = {
   chartError: null,
 };
 
-const props: React.ComponentProps<typeof HelmInstallUpgradeForm> = {
+const props: ComponentProps<typeof HelmInstallUpgradeForm> = {
   ...componentProps,
   ...formikFormProps,
   initialValues: formValues,

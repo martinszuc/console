@@ -1,7 +1,7 @@
-import * as React from 'react';
+import type { FC } from 'react';
 import { List, ListItem } from '@patternfly/react-core';
 
-const PlainList: React.FCC<PlainListProps> = ({ items }) =>
+const PlainList: FC<PlainListProps> = ({ items }) =>
   items ? (
     <List isPlain>
       {items.map((i) => (

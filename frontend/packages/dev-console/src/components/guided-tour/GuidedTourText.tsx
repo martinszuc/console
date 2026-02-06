@@ -1,11 +1,11 @@
-import * as React from 'react';
+import type { FC } from 'react';
 import { PlusCircleIcon } from '@patternfly/react-icons/dist/esm/icons/plus-circle-icon';
 import { useTranslation } from 'react-i18next';
 import * as semver from 'semver';
 import { ExternalLink } from '@console/shared/src/components/links/ExternalLink';
 import { useOpenShiftVersion } from '@console/shared/src/hooks/version';
 
-const DevPerspectiveTourText: React.FC = () => {
+const DevPerspectiveTourText: FC = () => {
   const { t } = useTranslation();
   const fullVersion = useOpenShiftVersion();
   const parsed = semver.parse(fullVersion);
@@ -23,14 +23,14 @@ const DevPerspectiveTourText: React.FC = () => {
 
 export const devPerspectiveTourText = <DevPerspectiveTourText />;
 
-const PerspectiveSwitcherTourText: React.FC = () => {
+const PerspectiveSwitcherTourText: FC = () => {
   const { t } = useTranslation();
   return (
     <>
-      <p>{t('devconsole~Switch between the Developer and Administrator perspectives.')}</p>
+      <p>{t('devconsole~Switch between the Developer and Core platform perspectives.')}</p>
       <p>
         {t(
-          'devconsole~Use the Administrator perspective to manage workload storage, networking, cluster settings, and more. This may require additional user access.',
+          'devconsole~Use the Core platform perspective to manage workload storage, networking, cluster settings, and more. This may require additional user access.',
         )}
       </p>
       <p>
@@ -44,7 +44,7 @@ const PerspectiveSwitcherTourText: React.FC = () => {
 
 export const perspectiveSwitcherTourText = <PerspectiveSwitcherTourText />;
 
-const WebTerminalGuidedTourText: React.FC = () => {
+const WebTerminalGuidedTourText: FC = () => {
   const { t } = useTranslation();
   return (
     <>
@@ -65,7 +65,7 @@ const WebTerminalGuidedTourText: React.FC = () => {
 
 export const webTerminalGuidedTourText = <WebTerminalGuidedTourText />;
 
-export const SearchTourText: React.FC = () => {
+export const SearchTourText: FC = () => {
   const { t } = useTranslation();
   return (
     <>

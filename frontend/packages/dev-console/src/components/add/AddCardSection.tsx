@@ -1,6 +1,6 @@
-import * as React from 'react';
+import type { FC, ReactElement } from 'react';
 import { AddActionGroup, ResolvedExtension, AddAction } from '@console/dynamic-plugin-sdk';
-import { LoadedExtension } from '@console/plugin-sdk/src';
+import type { LoadedExtension } from '@console/dynamic-plugin-sdk/src/types';
 import { orderExtensionBasedOnInsertBeforeAndAfter } from '@console/shared/';
 import { getAddGroups } from '../../utils/add-page-utils';
 import { AddGroup } from '../types';
@@ -20,7 +20,7 @@ type AddCardSectionProps = {
 
 const COLUMN_WIDTH = 300;
 
-const AddCardSection: React.FC<AddCardSectionProps> = ({
+const AddCardSection: FC<AddCardSectionProps> = ({
   namespace,
   addActionExtensions,
   addActionGroupExtensions,
@@ -31,7 +31,7 @@ const AddCardSection: React.FC<AddCardSectionProps> = ({
   if (loadingFailed || accessCheckFailed) {
     return <AddCardSectionEmptyState accessCheckFailed={!loadingFailed && accessCheckFailed} />;
   }
-  const getAddCards = (): React.ReactElement[] => {
+  const getAddCards = (): ReactElement[] => {
     if (!extensionsLoaded) {
       return [];
     }

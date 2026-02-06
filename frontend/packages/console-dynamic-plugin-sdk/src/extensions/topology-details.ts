@@ -1,12 +1,12 @@
-import * as React from 'react';
+import type { ReactNode, ReactElement } from 'react';
 import { GraphElement } from '@patternfly/react-topology';
 import { ExtensionHook } from '../api/common-types';
-import { Extension, CodeRef, ExtensionDeclaration } from '../types';
+import { CodeRef, Extension } from '../types';
 import { K8sResourceCommon } from './console-types';
 import { BuildConfigData } from './topology-types';
 
 /** DetailsTab contributes a tab for the topology details panel. */
-export type DetailsTab = ExtensionDeclaration<
+export type DetailsTab = Extension<
   'console.topology/details/tab',
   {
     /** A unique identifier for this details tab. */
@@ -26,7 +26,7 @@ export type DetailsTab = ExtensionDeclaration<
 >;
 
 /** DetailsTabSection contributes a section for a specific tab in topology details panel. */
-export type DetailsTabSection = ExtensionDeclaration<
+export type DetailsTabSection = Extension<
   'console.topology/details/tab-section',
   {
     /** A unique identifier for this details tab section. */
@@ -41,9 +41,7 @@ export type DetailsTabSection = ExtensionDeclaration<
     /** Returns a section for the graph element or undefined if not provided.
      * @deprecated Fallback if no provider is defined. renderNull is a no-op already.
      */
-    section: CodeRef<
-      (element: GraphElement, renderNull?: () => null) => React.Component | undefined
-    >;
+    section: CodeRef<(element: GraphElement, renderNull?: () => null) => ReactNode>;
     /** Insert this item before the item referenced here.
      * For arrays, the first one found in order is used.
      * */
@@ -57,7 +55,7 @@ export type DetailsTabSection = ExtensionDeclaration<
 >;
 
 /** DetailsResourceLink contributes a link for specific topology context or graph element. */
-export type DetailsResourceLink = ExtensionDeclaration<
+export type DetailsResourceLink = Extension<
   'console.topology/details/resource-link',
   {
     /** A higher priority factory will get the first chance to create the link. */
@@ -65,12 +63,12 @@ export type DetailsResourceLink = ExtensionDeclaration<
     /** Return the resource link if provided, otherwise undefined.
      * Use ResourceIcon and ResourceLink for styles.
      * */
-    link: CodeRef<(element: GraphElement) => React.Component | undefined>;
+    link: CodeRef<(element: GraphElement) => ReactNode>;
   }
 >;
 
 /** DetailsResourceAlert contributes an alert for specific topology context or graph element. */
-export type DetailsResourceAlert = ExtensionDeclaration<
+export type DetailsResourceAlert = Extension<
   'console.topology/details/resource-alert',
   {
     /** The ID of this alert. Used to save state if the alert shouldn't be shown after dismissed. */
@@ -81,7 +79,7 @@ export type DetailsResourceAlert = ExtensionDeclaration<
 >;
 
 /** PodAdapter contributes an adapter to adapt element to data that can be used by Pod component */
-export type PodAdapter = ExtensionDeclaration<
+export type PodAdapter = Extension<
   'console.topology/adapter/pod',
   {
     /** adapter to adapt element to data that can be used by Pod component. */
@@ -90,7 +88,7 @@ export type PodAdapter = ExtensionDeclaration<
 >;
 
 /** BuildAdapter contributes an adapter to adapt element to data that can be used by Build component */
-export type BuildAdapter = ExtensionDeclaration<
+export type BuildAdapter = Extension<
   'console.topology/adapter/build',
   {
     /** adapter to adapt element to data that can be used by Build component. */
@@ -99,7 +97,7 @@ export type BuildAdapter = ExtensionDeclaration<
 >;
 
 /** NetworkAdpater contributes an adapter to adapt element to data that can be used by Networking component */
-export type NetworkAdapter = ExtensionDeclaration<
+export type NetworkAdapter = Extension<
   'console.topology/adapter/network',
   {
     /** adapter to adapt element to data that can be used by Networking component. */
@@ -153,9 +151,9 @@ export type DetailsResourceAlertContent = {
    * State will be store in user settings, once dismissed alert won't show up again untill user settings state resets
    */
   dismissible?: boolean;
-  content: React.Component | undefined | JSX.Element | string;
+  content: ReactNode;
   variant?: 'success' | 'danger' | 'warning' | 'info' | 'custom';
-  actionLinks?: React.ReactNode;
+  actionLinks?: ReactNode;
 };
 
 export type AdapterDataType<D = {}, T = {}> = {
@@ -177,7 +175,4 @@ export type NetworkAdapterType = {
   resource: K8sResourceCommon;
 };
 
-export type DetailsTabSectionExtensionHook = ExtensionHook<
-  React.ReactElement | undefined,
-  GraphElement
->;
+export type DetailsTabSectionExtensionHook = ExtensionHook<ReactElement | undefined, GraphElement>;

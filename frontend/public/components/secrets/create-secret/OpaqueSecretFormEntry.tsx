@@ -1,4 +1,5 @@
-import { FCC, FormEvent } from 'react';
+import type { FC } from 'react';
+import { FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Base64 } from 'js-base64';
 import { TextInput, Button, FormGroup, ActionGroup, FormFieldGroup } from '@patternfly/react-core';
@@ -6,10 +7,9 @@ import { DroppableFileInput } from './DropableFileInput';
 import { OpaqueSecretFormEntryProps } from './types';
 import { MinusCircleIcon } from '@patternfly/react-icons/dist/esm/icons/minus-circle-icon';
 
-export const OpaqueSecretFormEntry: FCC<OpaqueSecretFormEntryProps> = ({
+export const OpaqueSecretFormEntry: FC<OpaqueSecretFormEntryProps> = ({
   onChange,
   entry,
-  key,
   index,
   removeEntry,
   showRemoveButton,
@@ -52,7 +52,7 @@ export const OpaqueSecretFormEntry: FCC<OpaqueSecretFormEntryProps> = ({
       )}
       <FormGroup label={t('public~Key')} isRequired fieldId="secret-key">
         <TextInput
-          id={`${key}-key`}
+          id={`${entry.uid}-key`}
           type="text"
           name="key"
           value={entry.key}
@@ -63,12 +63,11 @@ export const OpaqueSecretFormEntry: FCC<OpaqueSecretFormEntryProps> = ({
       <DroppableFileInput
         onChange={handleValueChange}
         inputFileData={Base64.decode(entry.value)}
-        id={`${key}-value`}
+        id={`${entry.uid}-value`}
         label={t('public~Value')}
-        inputFieldHelpText={t(
+        filenamePlaceholder={t(
           'public~Drag and drop file with your value here or browse to upload it.',
         )}
-        inputFileIsBinary={entry.isBinary_}
       />
     </FormFieldGroup>
   );

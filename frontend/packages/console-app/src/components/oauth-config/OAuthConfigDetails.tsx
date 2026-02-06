@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { formatPrometheusDuration } from '@openshift-console/plugin-shared/src/datetime/prometheus';
+import type { FC, Ref } from 'react';
+import { useState } from 'react';
 import {
   Alert,
   DescriptionListDescription,
@@ -24,15 +24,16 @@ import { OAuthKind } from '@console/internal/module/k8s';
 import PaneBody from '@console/shared/src/components/layout/PaneBody';
 import { IDP_TYPES } from '@console/shared/src/constants/auth';
 import { useQueryParams } from '@console/shared/src/hooks/useQueryParams';
+import { formatPrometheusDuration } from '@console/shared/src/utils/datetime';
 import { IdentityProviders } from './IdentityProviders';
 
 // Convert to ms for formatPrometheusDuration
 const tokenDuration = (seconds: number) =>
   _.isNil(seconds) ? '-' : formatPrometheusDuration(seconds * 1000);
 
-export const OAuthConfigDetails: React.FC<OAuthDetailsProps> = ({ obj }: { obj: OAuthKind }) => {
+export const OAuthConfigDetails: FC<OAuthDetailsProps> = ({ obj }: { obj: OAuthKind }) => {
   const navigate = useNavigate();
-  const [isIDPOpen, setIDPOpen] = React.useState(false);
+  const [isIDPOpen, setIDPOpen] = useState(false);
   const { identityProviders, tokenConfig } = obj.spec;
   const { t } = useTranslation();
   const queryParams = useQueryParams();
@@ -125,7 +126,7 @@ export const OAuthConfigDetails: React.FC<OAuthDetailsProps> = ({ obj }: { obj: 
             isOpen={isIDPOpen}
             onSelect={() => setIDPOpen(false)}
             onOpenChange={(isOpen: boolean) => setIDPOpen(isOpen)}
-            toggle={(toggleRef: React.Ref<MenuToggleElement>) => (
+            toggle={(toggleRef: Ref<MenuToggleElement>) => (
               <MenuToggle
                 id="idp-dropdown"
                 data-test-id="dropdown-button"

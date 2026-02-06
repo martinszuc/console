@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { FC } from 'react';
 import { FormikProps, FormikValues } from 'formik';
 import * as _ from 'lodash';
 import { useTranslation } from 'react-i18next';
@@ -7,7 +7,7 @@ import AdminNamespaceSection from './AdminNamespaceSection';
 import CloudShellAdvancedOption from './CloudShellAdvancedOption';
 import NamespaceSection from './NamespaceSection';
 
-const CloudShellSetupForm: React.FCC<
+const CloudShellSetupForm: FC<
   Pick<
     FormikProps<FormikValues>,
     'errors' | 'handleSubmit' | 'handleReset' | 'status' | 'isSubmitting'

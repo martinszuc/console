@@ -1,6 +1,6 @@
+import { renderHook } from '@testing-library/react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useK8sGet } from '@console/internal/components/utils/k8s-get-hook';
-import { testHook } from '@console/shared/src/test-utils/hooks-utils';
 import { useUser } from '../useUser';
 
 jest.mock('react-i18next', () => ({
@@ -28,7 +28,7 @@ jest.mock('@console/dynamic-plugin-sdk', () => ({
   ...jest.requireActual('@console/dynamic-plugin-sdk'),
   getUser: jest.fn(),
   getUserResource: jest.fn(),
-  setUserResource: (...args) => mockSetUserResource(...args),
+  setUserResource: (userResource: unknown) => mockSetUserResource(userResource),
 }));
 
 const mockDispatch = jest.fn();
@@ -52,7 +52,7 @@ describe('useUser', () => {
 
     mockUseK8sGet.mockReturnValue([mockUserResource, true, null]);
 
-    const { result } = testHook(() => useUser());
+    const { result } = renderHook(() => useUser());
 
     expect(result.current.user).toEqual(mockUser);
     expect(result.current.userResource).toEqual(mockUserResource);
@@ -69,7 +69,7 @@ describe('useUser', () => {
 
     mockUseK8sGet.mockReturnValue([mockUserResource, true, null]);
 
-    const { result } = testHook(() => useUser());
+    const { result } = renderHook(() => useUser());
 
     expect(result.current.displayName).toBe('testuser@example.com'); // Should fallback to username
     expect(result.current.fullName).toBeUndefined();
@@ -83,7 +83,7 @@ describe('useUser', () => {
 
     mockUseK8sGet.mockReturnValue([mockUserResource, true, null]);
 
-    testHook(() => useUser());
+    renderHook(() => useUser());
 
     expect(mockDispatch).toHaveBeenCalledWith({
       type: 'setUserResource',
@@ -99,7 +99,7 @@ describe('useUser', () => {
 
     mockUseK8sGet.mockReturnValue([mockUserResource, true, null]);
 
-    const { result } = testHook(() => useUser());
+    const { result } = renderHook(() => useUser());
 
     expect(result.current.displayName).toBe('Unknown user'); // Should fallback to translated "Unknown user"
   });
@@ -112,7 +112,7 @@ describe('useUser', () => {
 
     mockUseK8sGet.mockReturnValue([mockUserResource, true, null]);
 
-    const { result } = testHook(() => useUser());
+    const { result } = renderHook(() => useUser());
 
     expect(result.current.displayName).toBe('Test User'); // Should be trimmed
   });

@@ -1,5 +1,6 @@
-import * as _ from 'lodash-es';
-import { FCC, useState, FormEvent } from 'react';
+import type { FC } from 'react';
+import * as _ from 'lodash';
+import { useState, FormEvent } from 'react';
 import { DocumentTitle } from '@console/shared/src/components/document-title/DocumentTitle';
 import { useTranslation } from 'react-i18next';
 import { Base64 } from 'js-base64';
@@ -36,7 +37,7 @@ import {
 import { SecretSubForm } from './SecretSubForm';
 import { isBinary } from 'istextorbinary';
 
-export const SecretFormWrapper: FCC<BaseEditSecretProps_> = (props) => {
+export const SecretFormWrapper: FC<BaseEditSecretProps_> = (props) => {
   const { formType, isCreate, modal, onCancel } = props;
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -60,7 +61,7 @@ export const SecretFormWrapper: FCC<BaseEditSecretProps_> = (props) => {
   const [stringData, setStringData] = useState(
     Object.entries(props.obj?.data ?? {}).reduce<Record<string, string>>((acc, [key, value]) => {
       if (isBinary(null, Buffer.from(value, 'base64'))) {
-        return null;
+        return acc;
       }
       acc[key] = value ? Base64.decode(value) : '';
       return acc;
@@ -93,8 +94,11 @@ export const SecretFormWrapper: FCC<BaseEditSecretProps_> = (props) => {
     const { metadata } = secret;
     setInProgress(true);
     const data = {
-      ..._.mapValues(stringData, (value) => {
-        return Base64.encode(value);
+      ..._.mapValues(stringData, (value, key) => {
+        // SSH private keys should end with a newline
+        const finalValue =
+          key === 'ssh-privatekey' && value && !value.endsWith('\n') ? `${value}\n` : value;
+        return Base64.encode(finalValue);
       }),
       ...base64StringData,
     };

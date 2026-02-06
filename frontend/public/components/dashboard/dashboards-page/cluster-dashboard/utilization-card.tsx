@@ -1,5 +1,6 @@
-import * as React from 'react';
-import * as _ from 'lodash-es';
+import type { FC, Ref, MouseEvent, ComponentType } from 'react';
+import { useState, useMemo } from 'react';
+import * as _ from 'lodash';
 import { useTranslation } from 'react-i18next';
 import {
   Badge,
@@ -32,7 +33,7 @@ import UtilizationItem, {
 import { UtilizationBody } from '@console/shared/src/components/dashboard/utilization-card/UtilizationBody';
 import { ByteDataTypes } from '@console/shared/src/graph-helper/data-utils';
 
-import { DashboardItemProps, withDashboardResources } from '../../with-dashboard-resources';
+import { useDashboardResources } from '@console/shared/src/hooks/useDashboardResources';
 import {
   humanizeBinaryBytes,
   humanizeCpuCores,
@@ -64,162 +65,142 @@ import {
 
 const networkPopovers = [NetworkInPopover, NetworkOutPopover];
 
-export const PrometheusUtilizationItem = withDashboardResources<PrometheusUtilizationItemProps>(
-  ({
-    watchPrometheus,
-    stopWatchPrometheusQuery,
-    prometheusResults,
-    utilizationQuery,
-    totalQuery,
-    title,
-    TopConsumerPopover,
-    humanizeValue,
-    byteDataType,
-    namespace,
-    isDisabled = false,
-    limitQuery,
-    requestQuery,
-    setLimitReqState,
-  }) => {
-    let utilization: PrometheusResponse, utilizationError: any;
-    let total: PrometheusResponse, totalError: any;
-    let max: DataPoint<number>[];
-    let limit: PrometheusResponse, limitError: any;
-    let request: PrometheusResponse, requestError: any;
-    let isLoading = false;
-    const { duration } = useUtilizationDuration();
+export const PrometheusUtilizationItem: FC<PrometheusUtilizationItemProps> = ({
+  utilizationQuery,
+  totalQuery,
+  title,
+  TopConsumerPopover,
+  humanizeValue,
+  byteDataType,
+  isDisabled = false,
+  limitQuery,
+  requestQuery,
+  setLimitReqState,
+}) => {
+  const { duration } = useUtilizationDuration();
 
-    React.useEffect(() => {
-      if (!isDisabled) {
-        watchPrometheus(utilizationQuery, namespace, duration);
-        totalQuery && watchPrometheus(totalQuery, namespace);
-        limitQuery && watchPrometheus(limitQuery, namespace, duration);
-        requestQuery && watchPrometheus(requestQuery, namespace, duration);
-        return () => {
-          stopWatchPrometheusQuery(utilizationQuery, duration);
-          totalQuery && stopWatchPrometheusQuery(totalQuery);
-          limitQuery && stopWatchPrometheusQuery(limitQuery, duration);
-          requestQuery && stopWatchPrometheusQuery(requestQuery, duration);
-        };
-      }
-    }, [
-      watchPrometheus,
-      stopWatchPrometheusQuery,
-      duration,
+  const queries = useMemo(() => {
+    if (isDisabled) {
+      return [];
+    }
+    const result = [
+      { query: utilizationQuery, timespan: duration },
+      totalQuery && { query: totalQuery },
+      limitQuery && { query: limitQuery, timespan: duration },
+      requestQuery && { query: requestQuery, timespan: duration },
+    ].filter(Boolean);
+    return result as { query: string; timespan?: number }[];
+  }, [isDisabled, utilizationQuery, totalQuery, limitQuery, requestQuery, duration]);
+
+  const dashboardResources = useDashboardResources({
+    prometheusQueries: queries,
+  });
+  const prometheusResults = dashboardResources.prometheusResults;
+
+  let utilization: PrometheusResponse, utilizationError: any;
+  let total: PrometheusResponse, totalError: any;
+  let max: DataPoint<number>[];
+  let limit: PrometheusResponse, limitError: any;
+  let request: PrometheusResponse, requestError: any;
+  let isLoading = false;
+
+  if (!isDisabled) {
+    [utilization, utilizationError] = getPrometheusQueryResponse(
+      prometheusResults,
       utilizationQuery,
-      totalQuery,
-      namespace,
-      isDisabled,
-      limitQuery,
-      requestQuery,
-    ]);
-
-    if (!isDisabled) {
-      [utilization, utilizationError] = getPrometheusQueryResponse(
-        prometheusResults,
-        utilizationQuery,
-        duration,
-      );
-      [total, totalError] = getPrometheusQueryResponse(prometheusResults, totalQuery);
-      [limit, limitError] = getPrometheusQueryResponse(prometheusResults, limitQuery, duration);
-      [request, requestError] = getPrometheusQueryResponse(
-        prometheusResults,
-        requestQuery,
-        duration,
-      );
-
-      max = getInstantVectorStats(total);
-      isLoading = !utilization || (totalQuery && !total) || (limitQuery && !limit);
-    }
-
-    return (
-      <UtilizationItem
-        title={title}
-        utilization={utilization}
-        limit={limit}
-        requested={request}
-        error={utilizationError || totalError || limitError || requestError}
-        isLoading={isLoading}
-        humanizeValue={humanizeValue}
-        byteDataType={byteDataType}
-        query={[utilizationQuery, limitQuery, requestQuery]}
-        max={max && max.length ? max[0].y : null}
-        TopConsumerPopover={TopConsumerPopover}
-        setLimitReqState={setLimitReqState}
-      />
+      duration,
     );
-  },
-);
+    [total, totalError] = getPrometheusQueryResponse(prometheusResults, totalQuery);
+    [limit, limitError] = getPrometheusQueryResponse(prometheusResults, limitQuery, duration);
+    [request, requestError] = getPrometheusQueryResponse(prometheusResults, requestQuery, duration);
 
-export const PrometheusMultilineUtilizationItem = withDashboardResources<
-  PrometheusMultilineUtilizationItemProps
->(
-  ({
-    watchPrometheus,
-    stopWatchPrometheusQuery,
-    prometheusResults,
-    queries,
-    title,
-    TopConsumerPopovers,
-    humanizeValue,
-    byteDataType,
-    namespace,
-    isDisabled = false,
-  }) => {
-    const { duration } = useUtilizationDuration();
-    React.useEffect(() => {
-      if (!isDisabled) {
-        queries.forEach((q) => watchPrometheus(q.query, namespace, duration));
-        return () => {
-          queries.forEach((q) => stopWatchPrometheusQuery(q.query, duration));
-        };
+    max = getInstantVectorStats(total);
+    isLoading = !utilization || (totalQuery && !total) || (limitQuery && !limit);
+  }
+
+  return (
+    <UtilizationItem
+      title={title}
+      utilization={utilization}
+      limit={limit}
+      requested={request}
+      error={utilizationError || totalError || limitError || requestError}
+      isLoading={isLoading}
+      humanizeValue={humanizeValue}
+      byteDataType={byteDataType}
+      query={[utilizationQuery, limitQuery, requestQuery]}
+      max={max && max.length ? max[0].y : null}
+      TopConsumerPopover={TopConsumerPopover}
+      setLimitReqState={setLimitReqState}
+    />
+  );
+};
+
+export const PrometheusMultilineUtilizationItem: FC<PrometheusMultilineUtilizationItemProps> = ({
+  queries,
+  title,
+  TopConsumerPopovers,
+  humanizeValue,
+  byteDataType,
+  isDisabled = false,
+}) => {
+  const { duration } = useUtilizationDuration();
+
+  const prometheusQueries = useMemo(() => {
+    if (isDisabled) {
+      return [];
+    }
+    return queries.map((q) => ({ query: q.query, timespan: duration }));
+  }, [isDisabled, queries, duration]);
+
+  const dashboardResources = useDashboardResources({
+    prometheusQueries,
+  });
+  const prometheusResults = dashboardResources.prometheusResults;
+
+  const stats = [];
+  let hasError = false;
+  let isLoading = false;
+  if (!isDisabled) {
+    queries.forEach((query) => {
+      const [response, responseError] = getPrometheusQueryResponse(
+        prometheusResults,
+        query.query,
+        duration,
+      );
+      if (responseError) {
+        hasError = true;
+        return false;
       }
-    }, [watchPrometheus, stopWatchPrometheusQuery, duration, queries, namespace, isDisabled]);
+      if (!response) {
+        isLoading = true;
+        return false;
+      }
+      stats.push(getRangeVectorStats(response, query.desc, null, trimSecondsXMutator)?.[0] || []);
+    });
+  }
 
-    const stats = [];
-    let hasError = false;
-    let isLoading = false;
-    if (!isDisabled) {
-      queries.forEach((query) => {
-        const [response, responseError] = getPrometheusQueryResponse(
-          prometheusResults,
-          query.query,
-          duration,
-        );
-        if (responseError) {
-          hasError = true;
-          return false;
-        }
-        if (!response) {
-          isLoading = true;
-          return false;
-        }
-        stats.push(getRangeVectorStats(response, query.desc, null, trimSecondsXMutator)?.[0] || []);
-      });
-    }
+  return (
+    <MultilineUtilizationItem
+      title={title}
+      data={stats}
+      error={hasError}
+      isLoading={isLoading}
+      humanizeValue={humanizeValue}
+      byteDataType={byteDataType}
+      queries={queries}
+      TopConsumerPopovers={TopConsumerPopovers}
+    />
+  );
+};
 
-    return (
-      <MultilineUtilizationItem
-        title={title}
-        data={stats}
-        error={hasError}
-        isLoading={isLoading}
-        humanizeValue={humanizeValue}
-        byteDataType={byteDataType}
-        queries={queries}
-        TopConsumerPopovers={TopConsumerPopovers}
-      />
-    );
-  },
-);
-
-const UtilizationCardNodeFilter: React.FC<UtilizationCardNodeFilterProps> = ({
+const UtilizationCardNodeFilter: FC<UtilizationCardNodeFilterProps> = ({
   machineConfigPools,
   onNodeSelect,
   selectedNodes,
 }) => {
   const { t } = useTranslation();
-  const [isOpen, setIsOpen] = React.useState<boolean>(false);
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const sortedMCPs = machineConfigPools.sort((a, b) => {
     const order = ['worker', 'master'];
     const indexA = order.indexOf(a.metadata.name);
@@ -250,7 +231,7 @@ const UtilizationCardNodeFilter: React.FC<UtilizationCardNodeFilterProps> = ({
     );
   });
 
-  const toggle = (toggleRef: React.Ref<MenuToggleElement>) => (
+  const toggle = (toggleRef: Ref<MenuToggleElement>) => (
     <MenuToggle ref={toggleRef} onClick={(open) => setIsOpen(open)} variant="plainText">
       {t('public~Filter by Node type')}
       {selectedNodes.length > 0 && (
@@ -285,7 +266,7 @@ export const UtilizationCard = () => {
     kind: referenceForModel(MachineConfigPoolModel),
   });
   // TODO: add `useUserSettings` to get default selected
-  const [selectedNodes, setSelectedNodes] = React.useState<string[]>([]);
+  const [selectedNodes, setSelectedNodes] = useState<string[]>([]);
 
   const [dynamicItemExtensions] = useResolvedExtensions<ClusterOverviewUtilizationItem>(
     isClusterOverviewUtilizationItem,
@@ -295,7 +276,7 @@ export const UtilizationCard = () => {
   >(isClusterOverviewMultilineUtilizationItem);
 
   // TODO: add `useUserSettingsCompatibility` to store selectedNodes
-  const onNodeSelect = (event: React.MouseEvent, selection: string) => {
+  const onNodeSelect = (event: MouseEvent, selection: string) => {
     const selectionUpdated = selection === 'control plane' ? 'master' : selection;
     if (selectedNodes.includes(selectionUpdated)) {
       setSelectedNodes(selectedNodes.filter((item) => item !== selectionUpdated));
@@ -305,7 +286,7 @@ export const UtilizationCard = () => {
   };
   // if no filter is applied, show all nodes using regex
   const nodeType = _.isEmpty(selectedNodes) ? '.+' : selectedNodes.join('|');
-  const [utilizationQueries, multilineQueries] = React.useMemo(
+  const [utilizationQueries, multilineQueries] = useMemo(
     () => [getUtilizationQueries(nodeType), getMultilineQueries(nodeType)],
     [nodeType],
   );
@@ -415,24 +396,22 @@ type PrometheusCommonProps = {
   isDisabled?: boolean;
 };
 
-type PrometheusUtilizationItemProps = DashboardItemProps &
-  PrometheusCommonProps & {
-    utilizationQuery: string;
-    totalQuery?: string;
-    limitQuery?: string;
-    requestQuery?: string;
-    TopConsumerPopover?: React.ComponentType<TopConsumerPopoverProps>;
-    setLimitReqState?: (state: LimitRequested) => void;
-  };
+type PrometheusUtilizationItemProps = PrometheusCommonProps & {
+  utilizationQuery: string;
+  totalQuery?: string;
+  limitQuery?: string;
+  requestQuery?: string;
+  TopConsumerPopover?: ComponentType<TopConsumerPopoverProps>;
+  setLimitReqState?: (state: LimitRequested) => void;
+};
 
-type PrometheusMultilineUtilizationItemProps = DashboardItemProps &
-  PrometheusCommonProps & {
-    queries: QueryWithDescription[];
-    TopConsumerPopovers?: React.ComponentType<TopConsumerPopoverProps>[];
-  };
+type PrometheusMultilineUtilizationItemProps = PrometheusCommonProps & {
+  queries: QueryWithDescription[];
+  TopConsumerPopovers?: ComponentType<TopConsumerPopoverProps>[];
+};
 
 type UtilizationCardNodeFilterProps = {
   machineConfigPools: MachineConfigPoolKind[];
-  onNodeSelect: (event: React.MouseEvent, selection: string) => void;
+  onNodeSelect: (event: MouseEvent, selection: string) => void;
   selectedNodes: string[];
 };

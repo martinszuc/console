@@ -1,12 +1,12 @@
-import * as React from 'react';
+import type { FC, ReactNode } from 'react';
 
 import './launcher-card.scss';
 
 interface LauncherBodyProps {
-  children?: React.ReactNode;
+  children?: ReactNode;
 }
 
-const LauncherBody: React.FCC<LauncherBodyProps> = ({ children }) => (
+const LauncherBody: FC<LauncherBodyProps> = ({ children }) => (
   <div className="co-launcher-card__body">{children}</div>
 );
 

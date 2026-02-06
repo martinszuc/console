@@ -1,5 +1,4 @@
-/// <reference path="./jest.d.ts" />
-/// <reference path="./react.d.ts" />
+/// <reference path="./i18next.d.ts" />
 /// <reference path="./generated/graphql-queries.d.ts" />
 
 declare module '*.svg' {
@@ -71,6 +70,7 @@ declare interface Window {
     nodeOperatingSystems: string[];
     hubConsoleURL: string;
     k8sMode: string;
+    techPreview: boolean;
     capabilities: {
       name: string;
       visibility: { state: 'Enabled' | 'Disabled' };

@@ -1,4 +1,4 @@
-import { cleanup } from '@testing-library/react';
+import { cleanup, act } from '@testing-library/react';
 import {
   verifyIDPAddAndCancelButtons,
   verifyPageTitleAndSubtitle,
@@ -17,8 +17,10 @@ describe('Add Identity Provider: GitLab', () => {
     setupFileReaderMock();
   });
 
-  beforeEach(() => {
-    renderWithProviders(<AddGitLabPage />);
+  beforeEach(async () => {
+    await act(async () => {
+      renderWithProviders(<AddGitLabPage />);
+    });
   });
 
   afterEach(() => {
@@ -73,10 +75,9 @@ describe('Add Identity Provider: GitLab', () => {
     });
   });
 
-  it('should render the CA file label and elements', () => {
-    verifyIDPFileFields({
+  it('should render the CA file label and elements', async () => {
+    await verifyIDPFileFields({
       inputLabel: 'CA file',
-      idPrefix: 'ca-file-input',
     });
   });
 

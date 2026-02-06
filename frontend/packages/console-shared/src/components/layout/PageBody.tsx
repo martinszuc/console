@@ -1,8 +1,8 @@
-import * as React from 'react';
+import type { FC, ReactNode } from 'react';
 import { Flex } from '@patternfly/react-core';
 import { css } from '@patternfly/react-styles';
 
-const PageBody: React.FCC<PageBodyProps> = ({ children, className, ...props }) => {
+const PageBody: FC<PageBodyProps> = ({ children, className, ...props }) => {
   return (
     <Flex
       className={css('co-m-page__body', className)}
@@ -18,7 +18,7 @@ const PageBody: React.FCC<PageBodyProps> = ({ children, className, ...props }) =
 };
 
 export type PageBodyProps = {
-  children: React.ReactNode;
+  children: ReactNode;
   className?: string;
 };
 

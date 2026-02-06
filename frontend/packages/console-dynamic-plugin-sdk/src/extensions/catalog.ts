@@ -1,10 +1,10 @@
-import * as React from 'react';
+import type { ReactNode, ComponentType } from 'react';
 import { ExtensionHook } from '../api/common-types';
-import { Extension, ExtensionDeclaration, CodeRef } from '../types';
+import { Extension, CodeRef } from '../types';
 
 /** This extension allows plugins to contribute a new type of catalog item. For example, a Helm plugin can define
     a new catalog item type as HelmCharts that it wants to contribute to the Software Catalog. */
-export type CatalogItemType = ExtensionDeclaration<
+export type CatalogItemType = Extension<
   'console.catalog/item-type',
   {
     /** Type for the catalog item. */
@@ -12,7 +12,7 @@ export type CatalogItemType = ExtensionDeclaration<
     /** Title for the catalog item. */
     title: string;
     /** Description for the type specific catalog. */
-    catalogDescription?: string | CodeRef<React.ReactNode>;
+    catalogDescription?: string | CodeRef<ComponentType>;
     /** Description for the catalog item type. */
     typeDescription?: string;
     /** Determine if filter groups should be sorted alphabetically. Defaults to true. */
@@ -26,7 +26,7 @@ export type CatalogItemType = ExtensionDeclaration<
 
 /** This extension allows plugins to contribute extra metadata like custom filters or groupings for any catalog item type.
     For example, a plugin can attach a custom filter for HelmCharts that can filter based on chart provider. */
-export type CatalogItemTypeMetadata = ExtensionDeclaration<
+export type CatalogItemTypeMetadata = Extension<
   'console.catalog/item-type-metadata',
   {
     /** Type for the catalog item. */
@@ -40,7 +40,7 @@ export type CatalogItemTypeMetadata = ExtensionDeclaration<
 
 /** This extension allows plugins to contribute a provider for a catalog item type. For example, a Helm Plugin can add a provider
     that fetches all the Helm Charts. This extension can also be used by other plugins to add more items to a specific catalog item type. */
-export type CatalogItemProvider = ExtensionDeclaration<
+export type CatalogItemProvider = Extension<
   'console.catalog/item-provider',
   {
     /** The unique identifier for the catalog this provider contributes to. */
@@ -59,7 +59,7 @@ export type CatalogItemProvider = ExtensionDeclaration<
 
 /** This extension can be used for plugins to contribute a handler that can filter specific catalog items.
     For example, the plugin can contribute a filter that filters helm charts from specific provider. */
-export type CatalogItemFilter = ExtensionDeclaration<
+export type CatalogItemFilter = Extension<
   'console.catalog/item-filter',
   {
     /** The unique identifier for the catalog this provider contributes to. */
@@ -72,7 +72,7 @@ export type CatalogItemFilter = ExtensionDeclaration<
 >;
 
 /** This extension can be used to contribute a provider that adds extra metadata to specific catalog items. */
-export type CatalogItemMetadataProvider = ExtensionDeclaration<
+export type CatalogItemMetadataProvider = Extension<
   'console.catalog/item-metadata',
   {
     /** The unique identifier for the catalog this provider contributes to. */
@@ -87,7 +87,7 @@ export type CatalogItemMetadataProvider = ExtensionDeclaration<
 >;
 
 /** This extension allows plugins to contribute a set of categories for a specific catalog item type. */
-export type CatalogCategoriesProvider = ExtensionDeclaration<
+export type CatalogCategoriesProvider = Extension<
   'console.catalog/categories-provider',
   {
     /** The catalog ID the categories are for. If not specified, the categories will be available for all catalogs. */
@@ -142,19 +142,19 @@ export type CatalogExtensionHookOptions = {
 export type CatalogItem<T extends any = any> = {
   uid: string;
   type: string;
-  typeLabel?: string | React.ReactNode;
+  typeLabel?: string | ReactNode;
   name: string;
   /** Optional title to render a custom title using ReactNode.
    * Rendered in catalog tile and side panel
    *  */
-  title?: React.ReactNode;
+  title?: ReactNode;
   // Used as the second label next to the provider label in the list result.
-  secondaryLabel?: React.ReactNode;
+  secondaryLabel?: ReactNode;
   provider?: string;
   // Used as the tile description. If provided as a string, the description is truncated to 3 lines.
   // If provided as a ReactNode, the contents will not be truncated.
   // This description will also be shown in the side panel if there are no `details.descriptions`.
-  description?: string | React.ReactNode;
+  description?: string | ReactNode;
   tags?: string[];
   creationTimestamp?: string;
   supportUrl?: string;
@@ -170,7 +170,7 @@ export type CatalogItem<T extends any = any> = {
   icon?: {
     url?: string;
     class?: string;
-    node?: React.ReactNode;
+    node?: ReactNode;
   };
   details?: CatalogItemDetails;
   // Optional text only badges for the catalog item which will be rendered on the tile and details panel.
@@ -201,13 +201,13 @@ export type CatalogItemDetails = {
 
 export type CatalogItemDetailsProperty = {
   label: string;
-  value: string | React.ReactNode;
+  value: string | ReactNode;
   isHidden?: boolean;
 };
 
 export type CatalogItemDetailsDescription = {
   label?: string;
-  value: string | React.ReactNode;
+  value: string | ReactNode;
 };
 
 export type CatalogItemAttribute = {
@@ -221,7 +221,7 @@ export type CatalogItemBadge = {
   text: string;
   tooltip?: string;
   color?: 'blue' | 'teal' | 'green' | 'orange' | 'purple' | 'red' | 'grey';
-  icon?: React.ReactNode;
+  icon?: ReactNode;
   variant?: 'outline' | 'filled';
 };
 

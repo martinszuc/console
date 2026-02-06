@@ -1,23 +1,25 @@
-import * as React from 'react';
+import type { FC } from 'react';
+import { useState } from 'react';
 import { Form } from '@patternfly/react-core';
 import { ExclamationTriangleIcon } from '@patternfly/react-icons/dist/esm/icons/exclamation-triangle-icon';
 import { t_global_icon_color_status_warning_default as warningColor } from '@patternfly/react-tokens';
 import { useTranslation, Trans } from 'react-i18next';
+import { OverlayComponent } from '@console/dynamic-plugin-sdk/src/app/modal-support/OverlayProvider';
 import {
-  createModalLauncher,
   ModalBody,
   ModalComponentProps,
   ModalSubmitFooter,
   ModalTitle,
+  ModalWrapper,
 } from '@console/internal/components/factory/modal';
 import { LoadingInline } from '@console/internal/components/utils/status-box';
 import { k8sKill } from '@console/internal/module/k8s';
 import { PodDisruptionBudgetModel } from '../../../models';
 import { PodDisruptionBudgetKind } from '../types';
 
-const DeletePDBModal: React.FC<DeletePDBModalProps> = ({ close, pdb, workloadName }) => {
-  const [submitError, setSubmitError] = React.useState<string>(null);
-  const [isSubmitting, setIsSubmitting] = React.useState<boolean>(false);
+const DeletePDBModal: FC<DeletePDBModalProps> = ({ close, pdb, workloadName }) => {
+  const [submitError, setSubmitError] = useState<string>(null);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const { t } = useTranslation();
   const pdbName = pdb.metadata.name;
 
@@ -71,7 +73,11 @@ const DeletePDBModal: React.FC<DeletePDBModalProps> = ({ close, pdb, workloadNam
   );
 };
 
-export const deletePDBModal = createModalLauncher(DeletePDBModal);
+export const DeletePDBModalOverlay: OverlayComponent<DeletePDBModalProps> = (props) => (
+  <ModalWrapper blocking onClose={props.closeOverlay}>
+    <DeletePDBModal {...props} close={props.closeOverlay} />
+  </ModalWrapper>
+);
 
 export type DeletePDBModalProps = ModalComponentProps & {
   pdb: PodDisruptionBudgetKind;

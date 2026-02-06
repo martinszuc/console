@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { ComponentProps } from 'react';
 import { screen } from '@testing-library/react';
 import { AddAction, ResolvedExtension } from '@console/dynamic-plugin-sdk';
 import { renderWithProviders } from '@console/shared/src/test-utils/unit-test-utils';
@@ -15,7 +15,7 @@ jest.mock('../hooks/useShowAddCardItemDetails', () => ({
 }));
 
 describe('AddCardItem', () => {
-  type AddCardItemProps = React.ComponentProps<typeof AddCardItem>;
+  type AddCardItemProps = ComponentProps<typeof AddCardItem>;
   let props: AddCardItemProps;
   const namespace = 'ns';
 
@@ -52,6 +52,7 @@ describe('AddCardItem', () => {
       const addAction: ResolvedExtension<AddAction> = addActionExtensions[0];
       const addActionWithoutValidIcon: ResolvedExtension<AddAction> = {
         ...addAction,
+        // @ts-expect-error - we are intentionally setting an invalid component type for testing
         properties: { ...addAction.properties, icon: {} },
       };
       props = {

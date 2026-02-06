@@ -1,4 +1,4 @@
-import { cleanup, screen } from '@testing-library/react';
+import { cleanup, screen, act } from '@testing-library/react';
 import {
   verifyIDPAddAndCancelButtons,
   verifyPageTitleAndSubtitle,
@@ -18,8 +18,10 @@ describe('Add Identity Provider: LDAP', () => {
     setupFileReaderMock();
   });
 
-  beforeEach(() => {
-    renderWithProviders(<AddLDAPPage />);
+  beforeEach(async () => {
+    await act(async () => {
+      renderWithProviders(<AddLDAPPage />);
+    });
   });
 
   afterEach(() => {
@@ -119,12 +121,11 @@ describe('Add Identity Provider: LDAP', () => {
     });
   });
 
-  it('should render the More options sub heading and CA file label and input element', () => {
+  it('should render the More options sub heading and CA file label and input element', async () => {
     expect(screen.getByRole('heading', { name: 'More options' })).toBeVisible();
 
-    verifyIDPFileFields({
+    await verifyIDPFileFields({
       inputLabel: 'CA file',
-      idPrefix: 'ca-file-input',
     });
   });
 

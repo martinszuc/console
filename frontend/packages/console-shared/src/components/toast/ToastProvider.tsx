@@ -1,5 +1,5 @@
-import * as React from 'react';
-import type { ReactNode } from 'react';
+import type { FC, ReactNode } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Alert, AlertGroup, AlertActionCloseButton, AlertActionLink } from '@patternfly/react-core';
 import ToastContext, { ToastOptions, ToastContextType } from './ToastContext';
 
@@ -7,10 +7,13 @@ interface ToastProviderProps {
   children?: ReactNode;
 }
 
-const ToastProvider: React.FCC<ToastProviderProps> = ({ children }) => {
-  const [toasts, setToasts] = React.useState<ToastOptions[]>([]);
+/** Stable reference to append toast alerts to the document body */
+const appendTo = () => document.body;
 
-  const removeToast = React.useCallback((id: string) => {
+const ToastProvider: FC<ToastProviderProps> = ({ children }) => {
+  const [toasts, setToasts] = useState<ToastOptions[]>([]);
+
+  const removeToast = useCallback((id: string) => {
     setToasts((state) => {
       const index = state.findIndex((t) => t.id === id);
       if (index !== -1) {
@@ -24,7 +27,7 @@ const ToastProvider: React.FCC<ToastProviderProps> = ({ children }) => {
     });
   }, []);
 
-  const addToast = React.useMemo(() => {
+  const addToast = useMemo(() => {
     let counter = 0;
     return (toast: ToastOptions) => {
       const clone: ToastOptions = {
@@ -42,7 +45,7 @@ const ToastProvider: React.FCC<ToastProviderProps> = ({ children }) => {
     };
   }, []);
 
-  const controller: ToastContextType = React.useMemo<ToastContextType>(
+  const controller: ToastContextType = useMemo<ToastContextType>(
     () => ({
       addToast,
       removeToast,
@@ -54,7 +57,7 @@ const ToastProvider: React.FCC<ToastProviderProps> = ({ children }) => {
     <ToastContext.Provider value={controller}>
       {children}
       {toasts.length ? (
-        <AlertGroup appendTo={() => document.body} isToast>
+        <AlertGroup appendTo={appendTo} isToast>
           {toasts.map((toast) => (
             <Alert
               key={toast.id}

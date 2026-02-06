@@ -1,4 +1,4 @@
-import { cleanup } from '@testing-library/react';
+import { cleanup, act } from '@testing-library/react';
 import {
   renderWithProviders,
   verifyInputField,
@@ -17,8 +17,10 @@ describe('Add Identity Provider: HTPasswd', () => {
     setupFileReaderMock();
   });
 
-  beforeEach(() => {
-    renderWithProviders(<AddHTPasswdPage />);
+  beforeEach(async () => {
+    await act(async () => {
+      renderWithProviders(<AddHTPasswdPage />);
+    });
   });
 
   afterEach(() => {
@@ -47,12 +49,10 @@ describe('Add Identity Provider: HTPasswd', () => {
     });
   });
 
-  it('should render the HTPasswd file file label and elements', () => {
-    verifyIDPFileFields({
+  it('should render the HTPasswd file file label and elements', async () => {
+    await verifyIDPFileFields({
       inputLabel: 'HTPasswd file',
-      idPrefix: 'htpasswd-file',
       helpText: 'Upload an HTPasswd file created using the htpasswd command.',
-      isRequired: true,
       fileName: 'example.htpasswd',
       fileContent: mockData.testHtpasswdFileContent,
     });

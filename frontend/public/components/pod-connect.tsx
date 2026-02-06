@@ -1,5 +1,6 @@
+import type { FC } from 'react';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
-import * as _ from 'lodash-es';
+import * as _ from 'lodash';
 import { Base64 } from 'js-base64';
 import { useTranslation } from 'react-i18next';
 import { ExpandIcon } from '@patternfly/react-icons/dist/esm/icons/expand-icon';
@@ -48,7 +49,7 @@ type PodConnectProps = {
   infoMessage?: React.ReactNode;
 };
 
-export const PodConnect: React.FCC<PodConnectProps> = ({
+export const PodConnect: FC<PodConnectProps> = ({
   obj,
   attach,
   initialContainer,
@@ -71,15 +72,18 @@ export const PodConnect: React.FCC<PodConnectProps> = ({
 
   const containers = useMemo(() => _.keyBy(_.get(obj, 'spec.containers', []), 'name'), [obj]);
 
+  const podName = useMemo(() => obj.metadata?.name || '', [obj?.metadata?.name]);
+  const namespace = useMemo(() => obj.metadata?.namespace || 'default', [obj?.metadata?.namespace]);
+  // We are being more specific with the dependency array here to avoid additional rerenders when other fields in obj changes
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const isWindows = useMemo(() => isWindowsPod(obj), [obj?.spec?.tolerations]);
+
   const connect = useCallback(() => {
-    const {
-      metadata: { name, namespace },
-    } = obj;
     const usedClient = isOpenShift ? 'oc' : 'kubectl';
-    const command = isWindowsPod(obj) ? ['cmd'] : ['sh', '-i', '-c', 'TERM=xterm sh'];
+    const command = isWindows ? ['cmd'] : ['sh', '-i', '-c', 'TERM=xterm sh'];
     const params = {
       ns: namespace,
-      name,
+      name: podName,
       path: attach ? ATTACH_COMMAND : EXEC_COMMAND,
       queryParams: {
         stdout: '1',
@@ -102,7 +106,7 @@ export const PodConnect: React.FCC<PodConnectProps> = ({
     const subprotocols = impersonate.subprotocols.concat('base64.channel.k8s.io');
 
     let previous = '';
-    wsRef.current = new WSFactory(`${name}-terminal`, {
+    wsRef.current = new WSFactory(`${podName}-terminal`, {
       host: 'auto',
       reconnect: true,
       path: resourceURL(PodModel, params),
@@ -143,7 +147,7 @@ export const PodConnect: React.FCC<PodConnectProps> = ({
       })
       // eslint-disable-next-line no-console
       .onerror((evt: any) => console.error(`WS error?! ${evt}`));
-  }, [obj, attach, activeContainer, t, isOpenShift]);
+  }, [podName, namespace, isWindows, attach, activeContainer, t, isOpenShift]);
 
   // Connect on mount and when dependencies change
   useEffect(() => {

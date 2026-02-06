@@ -1,9 +1,9 @@
-import * as React from 'react';
+import type { FC } from 'react';
 import { List, ListProps } from '@patternfly/react-core';
 
 import './DetailPropertyList.scss';
 
-const DetailPropertyList: React.FCC<ListProps> = ({ children, ...props }) => (
+const DetailPropertyList: FC<ListProps> = ({ children, ...props }) => (
   <List className="co-detail-property-list" {...props}>
     {children}
   </List>

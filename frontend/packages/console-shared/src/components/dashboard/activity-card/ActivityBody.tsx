@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC, ReactNode } from 'react';
+import { useRef, useEffect, useState, useCallback } from 'react';
 import { Accordion, Button } from '@patternfly/react-core';
 import { PauseIcon } from '@patternfly/react-icons/dist/esm/icons/pause-icon';
 import { PlayIcon } from '@patternfly/react-icons/dist/esm/icons/play-icon';
@@ -17,7 +18,7 @@ import EventItem from './EventItem';
 
 import './activity-card.scss';
 
-export const Activity: React.FCC<ActivityProps> = ({ timestamp, children }) => {
+export const Activity: FC<ActivityProps> = ({ timestamp, children }) => {
   const { t } = useTranslation();
   return (
     <div className="co-activity-item__ongoing" data-test="activity">
@@ -34,26 +35,28 @@ export const Activity: React.FCC<ActivityProps> = ({ timestamp, children }) => {
   );
 };
 
-export const RecentEventsBodyContent: React.FC<RecentEventsBodyContentProps> = ({
-  events,
+export const RecentEventsBodyContent: FC<RecentEventsBodyContentProps> = ({
+  eventsData,
+  eventsLoaded,
+  eventsLoadError,
   filter,
   paused,
   setPaused,
 }) => {
   const { t } = useTranslation();
-  const ref = React.useRef<EventKind[]>([]);
-  React.useEffect(() => {
-    if (paused && events) {
-      ref.current = events.data;
+  const ref = useRef<EventKind[]>([]);
+  useEffect(() => {
+    if (paused && eventsData) {
+      ref.current = eventsData;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paused]);
-  if (!paused && events) {
-    ref.current = events.data;
+  if (!paused && eventsData) {
+    ref.current = eventsData;
   }
-  const eventsData = ref.current;
-  const [expanded, setExpanded] = React.useState<string[]>([]);
-  const onToggle = React.useCallback(
+  const currentEventsData = ref.current;
+  const [expanded, setExpanded] = useState<string[]>([]);
+  const onToggle = useCallback(
     (uid: string) => {
       const isExpanded = expanded.includes(uid);
       const newExpanded = isExpanded ? expanded.filter((e) => e !== uid) : [...expanded, uid];
@@ -62,17 +65,17 @@ export const RecentEventsBodyContent: React.FC<RecentEventsBodyContentProps> = (
     },
     [expanded, setPaused],
   );
-  const isExpanded = React.useCallback(
+  const isExpanded = useCallback(
     (uid: string) => {
       return expanded.includes(uid);
     },
     [expanded],
   );
 
-  if (events && events.loadError) {
+  if (eventsLoadError) {
     return <ErrorLoadingEvents />;
   }
-  if (!(events && events.loaded)) {
+  if (!eventsLoaded) {
     return (
       <div className="co-status-card__alerts-body">
         <div className="co-status-card__alert-item co-status-card__alert-item--loading">
@@ -86,7 +89,7 @@ export const RecentEventsBodyContent: React.FC<RecentEventsBodyContentProps> = (
     );
   }
 
-  const filteredEvents = filter ? eventsData.filter(filter) : eventsData;
+  const filteredEvents = filter ? currentEventsData.filter(filter) : currentEventsData;
   const sortedEvents: EventKind[] = sortEvents(filteredEvents);
   const lastEvents = sortedEvents.slice(0, 50);
   if (sortedEvents.length === 0) {
@@ -113,7 +116,7 @@ export const RecentEventsBodyContent: React.FC<RecentEventsBodyContentProps> = (
   );
 };
 
-export const PauseButton: React.FC<PauseButtonProps> = ({ paused, togglePause }) => {
+export const PauseButton: FC<PauseButtonProps> = ({ paused, togglePause }) => {
   const { t } = useTranslation();
   return (
     <Button
@@ -130,10 +133,10 @@ export const PauseButton: React.FC<PauseButtonProps> = ({ paused, togglePause })
   );
 };
 
-export const RecentEventsBody: React.FC<RecentEventsBodyProps> = (props) => {
+export const RecentEventsBody: FC<RecentEventsBodyProps> = (props) => {
   const { t } = useTranslation();
-  const [paused, setPaused] = React.useState(false);
-  const togglePause = React.useCallback(() => setPaused(!paused), [paused]);
+  const [paused, setPaused] = useState(false);
+  const togglePause = useCallback(() => setPaused(!paused), [paused]);
   return (
     <>
       <div className="co-activity-card__recent-title" data-test="activity-recent-title">
@@ -145,7 +148,7 @@ export const RecentEventsBody: React.FC<RecentEventsBodyProps> = (props) => {
   );
 };
 
-export const OngoingActivityBody: React.FC<OngoingActivityBodyProps> = ({
+export const OngoingActivityBody: FC<OngoingActivityBodyProps> = ({
   loaded,
   resourceActivities = [],
   prometheusActivities = [],
@@ -153,7 +156,7 @@ export const OngoingActivityBody: React.FC<OngoingActivityBodyProps> = ({
   const { t } = useTranslation();
   const activitiesLoaded =
     loaded || resourceActivities.length > 0 || prometheusActivities.length > 0;
-  let body: React.ReactNode;
+  let body: ReactNode;
   if (!activitiesLoaded) {
     body = (
       <div className="co-activity-item__ongoing">
@@ -200,7 +203,7 @@ export const OngoingActivityBody: React.FC<OngoingActivityBodyProps> = ({
   );
 };
 
-const ActivityBody: React.FCC<ActivityBodyProps> = ({ children, className }) => (
+const ActivityBody: FC<ActivityBodyProps> = ({ children, className }) => (
   <div className={css('co-activity-card__body', className)} id="activity-body">
     {children}
   </div>
@@ -215,7 +218,7 @@ type RecentEventsBodyContentProps = RecentEventsBodyProps & {
 
 type ActivityProps = {
   timestamp?: Date;
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
 type PauseButtonProps = {

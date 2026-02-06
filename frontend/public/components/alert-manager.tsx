@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { useCallback } from 'react';
+import type { FC } from 'react';
+import { useMemo, Suspense, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Button,
@@ -19,7 +19,6 @@ import { ListPage } from './factory/list-page';
 import {
   cellIsStickyProps,
   getNameCellProps,
-  initialFiltersDefault,
   ConsoleDataView,
 } from '@console/app/src/components/data-view/ConsoleDataView';
 import { GetDataViewRows } from '@console/app/src/components/data-view/types';
@@ -33,13 +32,14 @@ import { useConfigureCountModal } from './modals/configure-count-modal';
 import { AlertmanagerModel } from '../models';
 import { LoadingBox } from './utils/status-box';
 
-const Details: React.FCC<DetailsProps> = (props) => {
+const Details: FC<DetailsProps> = (props) => {
   const alertManager = props.obj;
   const { metadata, spec } = alertManager;
   const launchModal = useConfigureCountModal({
     resourceKind: AlertmanagerModel,
     resource: alertManager,
     titleKey: 'public~Edit Alertmanager replicas',
+    // t('public~Alertmanager maintains the proper number of healthy replicas.')
     messageKey: 'public~Alertmanager maintains the proper number of healthy replicas.',
     path: '/spec/replicas',
     buttonTextKey: 'public~Save',
@@ -124,7 +124,7 @@ const tableColumnInfo = [
   { id: 'nodeSelector' },
 ];
 
-const getDataViewRows: GetDataViewRows<K8sResourceKind, undefined> = (data, columns) => {
+const getDataViewRows: GetDataViewRows<K8sResourceKind> = (data, columns) => {
   return data.map(({ obj: alertManager }) => {
     const { metadata, spec } = alertManager;
 
@@ -169,7 +169,7 @@ const getDataViewRows: GetDataViewRows<K8sResourceKind, undefined> = (data, colu
 
 const useAlertManagerColumns = (): TableColumn<K8sResourceKind>[] => {
   const { t } = useTranslation();
-  const columns = React.useMemo(() => {
+  const columns = useMemo(() => {
     return [
       {
         title: t('public~Name'),
@@ -219,22 +219,21 @@ const useAlertManagerColumns = (): TableColumn<K8sResourceKind>[] => {
   return columns;
 };
 
-const AlertManagersList: React.FCC<AlertManagersListProps> = ({ data, loaded, ...props }) => {
+const AlertManagersList: FC<AlertManagersListProps> = ({ data, loaded, ...props }) => {
   const columns = useAlertManagerColumns();
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView
         {...props}
         label={AlertmanagerModel.labelPlural}
         data={data}
         loaded={loaded}
         columns={columns}
-        initialFilters={initialFiltersDefault}
         getDataViewRows={getDataViewRows}
         hideColumnManagement={true}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 

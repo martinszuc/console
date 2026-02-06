@@ -1,6 +1,6 @@
-import * as React from 'react';
+import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import * as _ from 'lodash-es';
+import * as _ from 'lodash';
 import { css } from '@patternfly/react-styles';
 import { returnIfValidURL } from '@console/shared/src/utils/utils';
 
@@ -256,7 +256,7 @@ export const getTemplateIcon = (template: TemplateKind | PartialObjectMetadata):
   return getImageForIconClass(iconClass) ?? returnIfValidURL(iconClass) ?? catalogImg;
 };
 
-export const ImageStreamIcon: React.FC<ImageStreamIconProps> = ({ tag, iconSize }) => {
+export const ImageStreamIcon: FC<ImageStreamIconProps> = ({ tag, iconSize }) => {
   const { t } = useTranslation();
   const iconClass = getImageStreamIcon(tag);
   const iconClassImg = getImageForIconClass(iconClass);

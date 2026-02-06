@@ -1,5 +1,6 @@
-import * as React from 'react';
-import * as _ from 'lodash-es';
+import type { FC } from 'react';
+import { useMemo, Suspense } from 'react';
+import * as _ from 'lodash';
 import { useTranslation } from 'react-i18next';
 
 import PaneBody from '@console/shared/src/components/layout/PaneBody';
@@ -9,7 +10,6 @@ import {
   actionsCellProps,
   cellIsStickyProps,
   getNameCellProps,
-  initialFiltersDefault,
   ConsoleDataView,
 } from '@console/app/src/components/data-view/ConsoleDataView';
 import { GetDataViewRows } from '@console/app/src/components/data-view/types';
@@ -38,7 +38,7 @@ import LazyActionMenu from '@console/shared/src/components/actions/LazyActionMen
 
 const machineAutoscalerReference = referenceForModel(MachineAutoscalerModel);
 
-const MachineAutoscalerTargetLink: React.FC<MachineAutoscalerTargetLinkProps> = ({ obj }) => {
+const MachineAutoscalerTargetLink: FC<MachineAutoscalerTargetLinkProps> = ({ obj }) => {
   const targetAPIVersion: string = _.get(obj, 'spec.scaleTargetRef.apiVersion');
   const targetKind: string = _.get(obj, 'spec.scaleTargetRef.kind');
   const targetName: string = _.get(obj, 'spec.scaleTargetRef.name');
@@ -62,7 +62,7 @@ const tableColumnInfo = [
   { id: '' },
 ];
 
-const getDataViewRows: GetDataViewRows<K8sResourceKind, undefined> = (data, columns) => {
+const getDataViewRows: GetDataViewRows<K8sResourceKind> = (data, columns) => {
   return data.map(({ obj }) => {
     const { name, namespace } = obj.metadata;
 
@@ -102,7 +102,7 @@ const getDataViewRows: GetDataViewRows<K8sResourceKind, undefined> = (data, colu
 
 const useMachineAutoscalerColumns = (): TableColumn<K8sResourceKind>[] => {
   const { t } = useTranslation();
-  const columns: TableColumn<K8sResourceKind>[] = React.useMemo(() => {
+  const columns: TableColumn<K8sResourceKind>[] = useMemo(() => {
     return [
       {
         title: t('public~Name'),
@@ -157,7 +157,7 @@ const useMachineAutoscalerColumns = (): TableColumn<K8sResourceKind>[] => {
   return columns;
 };
 
-const MachineAutoscalerList: React.FC<MachineAutoscalerListProps> = ({
+const MachineAutoscalerList: FC<MachineAutoscalerListProps> = ({
   data,
   loaded,
   loadError,
@@ -166,7 +166,7 @@ const MachineAutoscalerList: React.FC<MachineAutoscalerListProps> = ({
   const columns = useMachineAutoscalerColumns();
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView<K8sResourceKind>
         {...props}
         label={MachineAutoscalerModel.labelPlural}
@@ -174,15 +174,14 @@ const MachineAutoscalerList: React.FC<MachineAutoscalerListProps> = ({
         loaded={loaded}
         loadError={loadError}
         columns={columns}
-        initialFilters={initialFiltersDefault}
         getDataViewRows={getDataViewRows}
         hideColumnManagement={true}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 
-const MachineAutoscalerDetails: React.FC<MachineAutoscalerDetailsProps> = ({ obj }) => {
+const MachineAutoscalerDetails: FC<MachineAutoscalerDetailsProps> = ({ obj }) => {
   const { t } = useTranslation();
   return (
     <>
@@ -217,7 +216,7 @@ const MachineAutoscalerDetails: React.FC<MachineAutoscalerDetailsProps> = ({ obj
   );
 };
 
-export const MachineAutoscalerPage: React.FC<MachineAutoscalerPageProps> = (props) => (
+export const MachineAutoscalerPage: FC<MachineAutoscalerPageProps> = (props) => (
   <ListPage
     {...props}
     ListComponent={MachineAutoscalerList}
@@ -227,7 +226,7 @@ export const MachineAutoscalerPage: React.FC<MachineAutoscalerPageProps> = (prop
   />
 );
 
-export const MachineAutoscalerDetailsPage: React.FC = (props) => (
+export const MachineAutoscalerDetailsPage: FC = (props) => (
   <DetailsPage
     {...props}
     kind={machineAutoscalerReference}

@@ -1,5 +1,6 @@
 import * as _ from 'lodash';
-import * as React from 'react';
+import type { FC } from 'react';
+import { useContext } from 'react';
 import { css } from '@patternfly/react-styles';
 import { useTranslation } from 'react-i18next';
 import {
@@ -10,7 +11,7 @@ import {
   Button,
   DescriptionList,
 } from '@patternfly/react-core';
-import { OverviewDetailItem } from '@openshift-console/plugin-shared/src';
+import { OverviewDetailItem } from '@console/internal/components/overview/OverviewDetailItem';
 import { getName } from '@console/shared/src/selectors/common';
 import { getRequester } from '@console/shared/src/selectors/namespace';
 import { GreenCheckCircleIcon } from '@console/shared/src/components/status/icons';
@@ -20,8 +21,8 @@ import { ProjectModel } from '../../../models';
 import { ProjectDashboardContext } from './project-dashboard-context';
 import { Link } from 'react-router-dom-v5-compat';
 
-export const DetailsCard: React.FC = () => {
-  const { obj } = React.useContext(ProjectDashboardContext);
+export const DetailsCard: FC = () => {
+  const { obj } = useContext(ProjectDashboardContext);
   const keys = _.keys(obj.metadata.labels).sort();
   const labelsSubset = _.take(keys, 3);
   const firstThreelabels = _.pick(obj.metadata.labels, labelsSubset);

@@ -1,10 +1,7 @@
-import {
-  ImpersonateKind,
-  impersonateStateToProps,
-  useSafetyFirst,
-} from '@console/dynamic-plugin-sdk';
+import type { FC } from 'react';
+import { ImpersonateKind, impersonateStateToProps } from '@console/dynamic-plugin-sdk';
 import { Button, Dropdown, MenuToggle, MenuToggleElement } from '@patternfly/react-core';
-import { some } from 'lodash-es';
+import { some } from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { connect } from 'react-redux';
 import { useNavigate } from 'react-router-dom-v5-compat';
@@ -24,7 +21,7 @@ type ActionsMenuDropdownProps = {
   active?: boolean;
 };
 
-const ActionsMenuDropdown: React.FCC<ActionsMenuDropdownProps> = ({ actions, title, active }) => {
+const ActionsMenuDropdown: FC<ActionsMenuDropdownProps> = ({ actions, title, active }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [isActive, setIsActive] = useState(!!active);
@@ -77,13 +74,13 @@ const ActionsMenuDropdown: React.FCC<ActionsMenuDropdownProps> = ({ actions, tit
   );
 };
 
-export const ActionsMenu: React.FCC<ActionsMenuProps> = connect(impersonateStateToProps)(
+export const ActionsMenu = connect(impersonateStateToProps)(
   ({
     actions,
     impersonate,
     title = undefined,
   }: ActionsMenuProps & { impersonate?: ImpersonateKind }) => {
-    const [isVisible, setVisible] = useSafetyFirst(false);
+    const [isVisible, setVisible] = useState(false);
 
     // Check if any actions are visible when actions have access reviews.
     useEffect(() => {

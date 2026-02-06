@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC, MouseEvent } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { CatalogItemHeader, CatalogTile } from '@patternfly/react-catalog-view-extension';
 import {
   Button,
@@ -41,7 +42,7 @@ import {
   sourceSort,
   validSubscriptionSort,
 } from './operator-hub-utils';
-import { InfrastructureFeature, OperatorHubItem } from './index';
+import { InfrastructureFeature, OperatorHubItem, TokenizedAuthProvider } from './index';
 
 // Scoring and priority code no longer used and will be removed with Operator Hub catalog files cleanup effort
 const SCORE = {
@@ -138,7 +139,7 @@ const filterByArchAndOS = (items: OperatorHubItem[]): OperatorHubItem[] => {
   });
 };
 
-const Badge: React.FC<{ text: string }> = ({ text }) => (
+const Badge: FC<{ text: string }> = ({ text }) => (
   <span key={text} className="pf-v6-c-badge pf-m-read">
     <Truncate className="pf-v6-c-truncate--no-min-width" content={text} />
   </span>
@@ -518,7 +519,7 @@ export const orderAndSortByRelevance = (
   });
 };
 
-const OperatorHubTile: React.FC<OperatorHubTileProps> = ({ item, onClick }) => {
+const OperatorHubTile: FC<OperatorHubTileProps> = ({ item, onClick }) => {
   const { t } = useTranslation();
   if (!item) {
     return null;
@@ -551,7 +552,7 @@ const OperatorHubTile: React.FC<OperatorHubTileProps> = ({ item, onClick }) => {
       icon={icon}
       vendor={vendorAndDeprecated()}
       description={description}
-      onClick={(e: React.MouseEvent<HTMLElement>) => {
+      onClick={(e: MouseEvent<HTMLElement>) => {
         if (isModifiedEvent(e)) return;
         e.preventDefault();
         onClick(item);
@@ -569,16 +570,16 @@ const OperatorHubTile: React.FC<OperatorHubTileProps> = ({ item, onClick }) => {
   );
 };
 
-export const OperatorHubTileView: React.FC<OperatorHubTileViewProps> = (props) => {
+export const OperatorHubTileView: FC<OperatorHubTileViewProps> = (props) => {
   const { t } = useTranslation();
-  const [detailsItem, setDetailsItem] = React.useState(null);
-  const [showDetails, setShowDetails] = React.useState(false);
+  const [detailsItem, setDetailsItem] = useState(null);
+  const [showDetails, setShowDetails] = useState(false);
   const [ignoreOperatorWarning, setIgnoreOperatorWarning, loaded] = useUserSettingsCompatibility<
     boolean
   >(userSettingsKey, storeKey, false);
-  const [updateChannel, setUpdateChannel] = React.useState('');
-  const [updateVersion, setUpdateVersion] = React.useState('');
-  const [tokenizedAuth, setTokenizedAuth] = React.useState(null);
+  const [updateChannel, setUpdateChannel] = useState('');
+  const [updateVersion, setUpdateVersion] = useState('');
+  const [tokenizedAuth, setTokenizedAuth] = useState<TokenizedAuthProvider | undefined>(undefined);
   const installVersion = getQueryArgument('version');
   const filteredItems = filterByArchAndOS(props.items);
 
@@ -594,11 +595,11 @@ export const OperatorHubTileView: React.FC<OperatorHubTileViewProps> = (props) =
 
   // Create wrapper functions that always use the full unfiltered item list
   // This ensures all categories and filter options are always available, regardless of current filters
-  const getAvailableCategoriesFromAllItems = React.useCallback(() => {
+  const getAvailableCategoriesFromAllItems = useCallback(() => {
     return determineCategories(filteredItems);
   }, [filteredItems]);
 
-  const getAvailableFiltersFromAllItems = React.useCallback(
+  const getAvailableFiltersFromAllItems = useCallback(
     (initialFilters: any, _items: OperatorHubItem[], filterGroups: string[]) => {
       // Always use filteredItems (full list) instead of the passed items (which are already filtered)
       return determineAvailableFilters(initialFilters, filteredItems, filterGroups);
@@ -607,7 +608,7 @@ export const OperatorHubTileView: React.FC<OperatorHubTileViewProps> = (props) =
   );
 
   // Performance optimization: Memoize sorted items with all filter dependencies
-  const sortedItems = React.useMemo(() => {
+  const sortedItems = useMemo(() => {
     // Ensure we have items before processing - prevents race conditions on initial load
     if (!filteredItems || filteredItems.length === 0) {
       return [];
@@ -704,7 +705,7 @@ export const OperatorHubTileView: React.FC<OperatorHubTileViewProps> = (props) =
     selectedValidSubscriptionFilters,
   ]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     const detailsItemID = searchParams.get('details-item');
     const currentItem = _.find(filteredItems, {
       uid: detailsItemID,
@@ -769,7 +770,7 @@ export const OperatorHubTileView: React.FC<OperatorHubTileViewProps> = (props) =
     // reset version and channel state so that switching between operator cards does not carry over previous selections
     setUpdateChannel('');
     setUpdateVersion('');
-    setTokenizedAuth('');
+    setTokenizedAuth(undefined);
   };
 
   const openOverlay = (item: OperatorHubItem) => {
@@ -790,21 +791,24 @@ export const OperatorHubTileView: React.FC<OperatorHubTileViewProps> = (props) =
     <OperatorHubTile updateChannel={updateChannel} item={item} onClick={openOverlay} />
   );
 
-  const installParamsURL =
-    detailsItem &&
-    detailsItem.obj &&
-    new URLSearchParams({
+  let installParamsURL = '';
+  if (detailsItem && detailsItem.obj) {
+    const installParams: Record<string, string> = {
       pkg: detailsItem.obj.metadata.name,
       catalog: detailsItem.catalogSource,
       catalogNamespace: detailsItem.catalogSourceNamespace,
       targetNamespace: props.namespace,
       channel: updateChannel,
       version: updateVersion,
-      tokenizedAuth,
-    }).toString();
+    };
+    if (tokenizedAuth) {
+      installParams.tokenizedAuth = tokenizedAuth;
+    }
+    installParamsURL = new URLSearchParams(installParams).toString();
+  }
 
   const installLink =
-    detailsItem && detailsItem.obj && `/operatorhub/subscribe?${installParamsURL.toString()}`;
+    detailsItem && detailsItem.obj && `/operatorhub/subscribe?${installParamsURL}`;
 
   const uninstallLink = () =>
     detailsItem &&
@@ -862,19 +866,22 @@ export const OperatorHubTileView: React.FC<OperatorHubTileViewProps> = (props) =
   /* eslint-disable */
   // CONSOLE TABLE FOR TESTING - Using memoized sorted data for performance
   // Displays search results with 'Search Relevance Score' and 'Is Red Hat' provider priority values, used in determining display order of operators
-  
+
   const getActiveFiltersDescription = () => {
     const activeFilters = [];
     if (selectedCategory !== 'all') activeFilters.push(`Category: ${selectedCategory}`);
     if (selectedSource !== 'all') activeFilters.push(`Source: ${selectedSource}`);
     if (selectedProvider !== 'all') activeFilters.push(`Provider: ${selectedProvider}`);
-    if (selectedCapabilityLevel !== 'all') activeFilters.push(`Capability Level: ${selectedCapabilityLevel}`);
-    if (selectedInfraFeatures !== 'all') activeFilters.push(`Infrastructure Features: ${selectedInfraFeatures}`);
-    if (selectedValidSubscriptionFilters !== 'all') activeFilters.push(`Valid Subscription: ${selectedValidSubscriptionFilters}`);
-    
+    if (selectedCapabilityLevel !== 'all')
+      activeFilters.push(`Capability Level: ${selectedCapabilityLevel}`);
+    if (selectedInfraFeatures !== 'all')
+      activeFilters.push(`Infrastructure Features: ${selectedInfraFeatures}`);
+    if (selectedValidSubscriptionFilters !== 'all')
+      activeFilters.push(`Valid Subscription: ${selectedValidSubscriptionFilters}`);
+
     return activeFilters.length > 0 ? activeFilters.join(', ') : 'No filters applied';
   };
-  
+
   // Debug logging for non-production environments
   if (process.env.NODE_ENV !== 'production') {
     if (searchTerm) {
@@ -886,42 +893,52 @@ export const OperatorHubTileView: React.FC<OperatorHubTileViewProps> = (props) =
         }))
         .filter((item) => item.relevanceScore > 0);
       const searchSortedForDisplay = orderAndSortByRelevance(searchFilteredForDisplay, searchTerm);
-      console.log('📋 OperatorHub Items Array (Search Filtered & Sorted):', searchSortedForDisplay.map(item => item.name || 'N/A'));
+      console.log(
+        '📋 OperatorHub Items Array (Search Filtered & Sorted):',
+        searchSortedForDisplay.map((item) => item.name || 'N/A'),
+      );
     } else {
-      console.log('📋 OperatorHub Items Array:', sortedItems.map(item => item.name || 'N/A'));
+      console.log(
+        '📋 OperatorHub Items Array:',
+        sortedItems.map((item) => item.name || 'N/A'),
+      );
     }
-    
+
     // Debug: Log component state to identify race conditions
     console.log('🐛 Debug Info:', {
       searchTerm,
       filteredItemsCount: filteredItems?.length || 0,
       sortedItemsCount: sortedItems?.length || 0,
       hasSearchTerm: !!searchTerm,
-      isInitialLoad: (!filteredItems || filteredItems.length === 0)
+      isInitialLoad: !filteredItems || filteredItems.length === 0,
     });
-    
+
     console.log(`📌 Current Active Filters: ${getActiveFiltersDescription()}`);
     console.log(`🔍 Search Term: "${searchTerm || 'none'}"`);
     console.log(`📊 Sorted Items Count: ${sortedItems.length}`);
 
     // Use memoized sortedItems instead of recalculating
     if (searchTerm && sortedItems.length > 0) {
-    // For console display, filter items by search term since TileViewPage will do this later
-    const searchFilteredItems = sortedItems
-      .map((item) => ({
-        ...item,
-        relevanceScore: calculateRelevanceScore(searchTerm, item),
-      }))
-      .filter((item) => item.relevanceScore > 0);
-    
-    // Sort the filtered items the same way TileViewPage will sort them
-    const searchSortedItems = orderAndSortByRelevance(searchFilteredItems, searchTerm);
-    
-    const tableData = searchSortedItems.map((item, index) => ({
+      // For console display, filter items by search term since TileViewPage will do this later
+      const searchFilteredItems = sortedItems
+        .map((item) => ({
+          ...item,
+          relevanceScore: calculateRelevanceScore(searchTerm, item),
+        }))
+        .filter((item) => item.relevanceScore > 0);
+
+      // Sort the filtered items the same way TileViewPage will sort them
+      const searchSortedItems = orderAndSortByRelevance(searchFilteredItems, searchTerm);
+
+      const tableData = searchSortedItems.map((item, index) => ({
         Title: item.name || 'N/A',
         'Search Relevance Score': item.relevanceScore || 0,
-        'Is Red Hat Provider (Priority)': getRedHatPriority(item) === REDHAT_PRIORITY.EXACT_MATCH ? `Exact Match (${REDHAT_PRIORITY.EXACT_MATCH})` : 
-                            getRedHatPriority(item) === REDHAT_PRIORITY.CONTAINS_REDHAT ? `Contains Red Hat (${REDHAT_PRIORITY.CONTAINS_REDHAT})` : `Non-Red Hat (${REDHAT_PRIORITY.NON_REDHAT})`,
+        'Is Red Hat Provider (Priority)':
+          getRedHatPriority(item) === REDHAT_PRIORITY.EXACT_MATCH
+            ? `Exact Match (${REDHAT_PRIORITY.EXACT_MATCH})`
+            : getRedHatPriority(item) === REDHAT_PRIORITY.CONTAINS_REDHAT
+            ? `Contains Red Hat (${REDHAT_PRIORITY.CONTAINS_REDHAT})`
+            : `Non-Red Hat (${REDHAT_PRIORITY.NON_REDHAT})`,
         // Source: item.source || 'N/A',
         'Metadata Provider': _.get(item, 'obj.metadata.labels.provider', 'N/A'),
         'Capability Level': (() => {
@@ -933,27 +950,39 @@ export const OperatorHubTileView: React.FC<OperatorHubTileViewProps> = (props) =
               return itemCapability;
             }
           }
-          
+
           const specCapability = _.get(item, 'obj.spec.capabilityLevel', '');
           if (specCapability) return specCapability;
-          
-          const metadataCapability = _.get(item, 'obj.metadata.annotations["operators.operatorframework.io/capability-level"]', '');
+
+          const metadataCapability = _.get(
+            item,
+            'obj.metadata.annotations["operators.operatorframework.io/capability-level"]',
+            '',
+          );
           if (metadataCapability) return metadataCapability;
-          
+
           return 'N/A';
         })(),
-        'Infrastructure Features': Array.isArray(item.infraFeatures) ? item.infraFeatures.join(', ') : 'N/A',
+        'Infrastructure Features': Array.isArray(item.infraFeatures)
+          ? item.infraFeatures.join(', ')
+          : 'N/A',
       }));
-      
-      console.log(`\n🔍 OperatorHub Search Results for "${searchTerm}" (${searchSortedItems.length} matches)`);
+
+      console.log(
+        `\n🔍 OperatorHub Search Results for "${searchTerm}" (${searchSortedItems.length} matches)`,
+      );
       console.log(`📌 Active Filters: ${getActiveFiltersDescription()}`);
       console.table(tableData);
     } else if (sortedItems.length > 0) {
       // Console table for filtered results without search term (category/filter-based) - using memoized data
       const tableData = sortedItems.map((item, index) => ({
         Title: item.name || 'N/A',
-        'Is Red Hat Provider (Priority)': getRedHatPriority(item) === REDHAT_PRIORITY.EXACT_MATCH ? `Exact Match (${REDHAT_PRIORITY.EXACT_MATCH})` : 
-                            getRedHatPriority(item) === REDHAT_PRIORITY.CONTAINS_REDHAT ? `Contains Red Hat (${REDHAT_PRIORITY.CONTAINS_REDHAT})` : `Non-Red Hat (${REDHAT_PRIORITY.NON_REDHAT})`,
+        'Is Red Hat Provider (Priority)':
+          getRedHatPriority(item) === REDHAT_PRIORITY.EXACT_MATCH
+            ? `Exact Match (${REDHAT_PRIORITY.EXACT_MATCH})`
+            : getRedHatPriority(item) === REDHAT_PRIORITY.CONTAINS_REDHAT
+            ? `Contains Red Hat (${REDHAT_PRIORITY.CONTAINS_REDHAT})`
+            : `Non-Red Hat (${REDHAT_PRIORITY.NON_REDHAT})`,
         // Source: item.source || 'N/A',
         'Metadata Provider': _.get(item, 'obj.metadata.labels.provider', 'N/A'),
         'Capability Level': (() => {
@@ -965,18 +994,24 @@ export const OperatorHubTileView: React.FC<OperatorHubTileViewProps> = (props) =
               return itemCapability;
             }
           }
-          
+
           const specCapability = _.get(item, 'obj.spec.capabilityLevel', '');
           if (specCapability) return specCapability;
-          
-          const metadataCapability = _.get(item, 'obj.metadata.annotations["operators.operatorframework.io/capability-level"]', '');
+
+          const metadataCapability = _.get(
+            item,
+            'obj.metadata.annotations["operators.operatorframework.io/capability-level"]',
+            '',
+          );
           if (metadataCapability) return metadataCapability;
-          
+
           return 'N/A';
         })(),
-        'Infrastructure Features': Array.isArray(item.infraFeatures) ? item.infraFeatures.join(', ') : 'N/A',
+        'Infrastructure Features': Array.isArray(item.infraFeatures)
+          ? item.infraFeatures.join(', ')
+          : 'N/A',
       }));
-      
+
       console.log(`\n📂 OperatorHub Filtered Results (${tableData.length} items)`);
       console.log(`📌 Active Filters: ${getActiveFiltersDescription()}`);
       console.table(tableData);
@@ -997,7 +1032,7 @@ export const OperatorHubTileView: React.FC<OperatorHubTileViewProps> = (props) =
         renderTile={renderTile}
         emptyStateTitle={t('olm~No Results Match the Filter Criteria')}
         emptyStateInfo={t(
-          'olm~No OperatorHub items are being shown due to the filters being applied.',
+          'olm~No Software Catalog items are being shown due to the filters being applied.',
         )}
       />
       {detailsItem && (

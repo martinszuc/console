@@ -1,5 +1,6 @@
-import * as React from 'react';
-import * as _ from 'lodash-es';
+import type { FC } from 'react';
+import { useMemo, Suspense } from 'react';
+import * as _ from 'lodash';
 import { Link } from 'react-router-dom-v5-compat';
 import { Trans, useTranslation } from 'react-i18next';
 import {
@@ -34,7 +35,6 @@ import {
   actionsCellProps,
   cellIsStickyProps,
   getNameCellProps,
-  initialFiltersDefault,
   ConsoleDataView,
 } from '@console/app/src/components/data-view/ConsoleDataView';
 import { GetDataViewRows } from '@console/app/src/components/data-view/types';
@@ -101,8 +101,8 @@ const BuildMetrics = ({ obj }) => {
     : ONE_HOUR;
   const timespan = Math.max(runTime, ONE_MINUTE); // Minimum timespan of one minute
   const namespace = obj.metadata.namespace;
-  const domain = React.useMemo(() => ({ x: [endTime - timespan, endTime] }), [endTime, timespan]);
-  const areaProps = React.useMemo(
+  const domain = useMemo(() => ({ x: [endTime - timespan, endTime] }), [endTime, timespan]);
+  const areaProps = useMemo(
     () => ({
       namespace,
       endTime,
@@ -167,7 +167,7 @@ const BuildMetrics = ({ obj }) => {
   ) : null;
 };
 
-const OpenShiftPipelines: React.FCC = () => {
+const OpenShiftPipelines: FC = () => {
   const { t } = useTranslation();
   const text = t('public~OpenShift Pipelines based on Tekton');
   return isUpstream() || isManaged() ? (
@@ -177,7 +177,7 @@ const OpenShiftPipelines: React.FCC = () => {
   );
 };
 
-export const PipelineBuildStrategyAlert: React.FCC<BuildsDetailsProps> = () => {
+export const PipelineBuildStrategyAlert: FC<BuildsDetailsProps> = () => {
   const { t } = useTranslation();
   return (
     <Alert
@@ -199,7 +199,7 @@ export const PipelineBuildStrategyAlert: React.FCC<BuildsDetailsProps> = () => {
   );
 };
 
-export const BuildsDetails: React.FCC<BuildsDetailsProps> = ({ obj: build }) => {
+export const BuildsDetails: FC<BuildsDetailsProps> = ({ obj: build }) => {
   const { logSnippet, message, startTimestamp, completionTimestamp } = build.status;
   const triggeredBy = _.map(build.spec.triggeredBy, 'message').join(', ');
   const hasPipeline = build.spec.strategy.type === BuildStrategyType.JenkinsPipeline;
@@ -294,7 +294,7 @@ export const getEnvPath = (props) => {
 
 const EnvironmentPage = (props) => (
   <AsyncComponent
-    loader={() => import('./environment.jsx').then((c) => c.EnvironmentPage)}
+    loader={() => import('./environment').then((c) => c.EnvironmentPage)}
     {...props}
   />
 );
@@ -324,7 +324,7 @@ export const BuildEnvironmentComponent = (props) => {
   );
 };
 
-export const BuildsDetailsPage: React.FCC = (props) => {
+export const BuildsDetailsPage: FC = (props) => {
   const prometheusIsAvailable = usePrometheusGate();
 
   return (
@@ -358,7 +358,7 @@ const tableColumnInfo = [
   { id: 'actions' },
 ];
 
-const getDataViewRows: GetDataViewRows<K8sResourceKind, undefined> = (data, columns) => {
+const getDataViewRows: GetDataViewRows<K8sResourceKind> = (data, columns) => {
   return data.map(({ obj }) => {
     const { name, namespace } = obj.metadata;
     const kindReference = referenceFor(obj);
@@ -400,7 +400,7 @@ const getDataViewRows: GetDataViewRows<K8sResourceKind, undefined> = (data, colu
 
 const useBuildsColumns = (): TableColumn<K8sResourceKind>[] => {
   const { t } = useTranslation();
-  const columns = React.useMemo(() => {
+  const columns = useMemo(() => {
     return [
       {
         title: t('public~Name'),
@@ -455,22 +455,21 @@ const useBuildsColumns = (): TableColumn<K8sResourceKind>[] => {
   return columns;
 };
 
-export const BuildsList: React.FCC<BuildsListProps> = ({ data, loaded, ...props }) => {
+export const BuildsList: FC<BuildsListProps> = ({ data, loaded, ...props }) => {
   const columns = useBuildsColumns();
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView
         {...props}
         label={BuildModel.labelPlural}
         data={data}
         loaded={loaded}
         columns={columns}
-        initialFilters={initialFiltersDefault}
         getDataViewRows={getDataViewRows}
         hideColumnManagement={true}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 
@@ -480,7 +479,7 @@ export const buildPhase = (build) => build.status.phase;
 
 export const allPhases = ['New', 'Pending', 'Running', 'Complete', 'Failed', 'Error', 'Cancelled'];
 
-export const BuildsPage: React.FCC<BuildsPageProps> = (props) => {
+export const BuildsPage: FC<BuildsPageProps> = (props) => {
   const { t } = useTranslation();
   return (
     <ListPage

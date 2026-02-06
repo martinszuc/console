@@ -27,6 +27,10 @@
     "properties": {
       "perspective": "dev",
       "tour": { "$codeRef": "getGuidedTour" }
+    },
+    "flags": {
+      "required": ["CONSOLE_CAPABILITY_GUIDEDTOUR_IS_ENABLED"],
+      "disallowed": ["INTEGRATION_TEST"]
     }
   },
 
@@ -1063,14 +1067,6 @@
       "exact": true,
       "path": ["/topology/all-namespaces", "/topology/ns/:name"],
       "component": { "$codeRef": "topologyPage" }
-    }
-  },
-  {
-    "type": "console.page/route",
-    "properties": {
-      "exact": true,
-      "path": ["/catalog/all-namespaces"],
-      "component": { "$codeRef": "CatalogDefaultNamespaceRedirect" }
     }
   },
   {

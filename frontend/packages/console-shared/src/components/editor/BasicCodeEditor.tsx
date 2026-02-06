@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { FC, useContext } from 'react';
 import { loader } from '@monaco-editor/react';
 import { CodeEditor } from '@patternfly/react-code-editor';
 import { css } from '@patternfly/react-styles';
@@ -7,7 +7,6 @@ import { useTranslation } from 'react-i18next';
 import { BasicCodeEditorProps } from '@console/dynamic-plugin-sdk';
 import { ThemeContext } from '@console/internal/components/ThemeProvider';
 import { ErrorBoundaryInline } from '@console/shared/src/components/error';
-import { defineThemes } from './theme';
 import './BasicCodeEditor.scss';
 
 // Avoid using monaco from CDN
@@ -20,9 +19,9 @@ loader.config({ monaco });
  * Note that it is important that this is the only component that imports
  * monaco-editor, to avoid fetching files from a 3rd-party CDN.
  */
-export const BasicCodeEditor: React.FC<BasicCodeEditorProps> = (props) => {
+export const BasicCodeEditor: FC<BasicCodeEditorProps> = (props) => {
   const { t } = useTranslation('console-shared');
-  const theme = React.useContext(ThemeContext);
+  const theme = useContext(ThemeContext);
 
   return (
     <ErrorBoundaryInline>
@@ -39,20 +38,18 @@ export const BasicCodeEditor: React.FC<BasicCodeEditorProps> = (props) => {
         emptyStateButton={t('Browse')}
         emptyStateLink={t('Start from scratch')}
         emptyStateTitle={t('Start editing')}
+        isDarkTheme={theme === 'dark'}
         {...props}
         className={css('co-code-editor', props.className)}
         editorProps={{
-          ...props?.editorProps,
-          theme: `console-${theme}`,
           beforeMount: (monacoInstance) => {
-            defineThemes(monacoInstance?.editor);
             window.monaco = monacoInstance; // for e2e tests
             props?.editorProps?.beforeMount?.(monacoInstance);
           },
         }}
         options={{
-          ...props?.options,
           fontFamily: 'var(--pf-t--global--font--family--mono)',
+          ...props?.options,
         }}
       />
     </ErrorBoundaryInline>

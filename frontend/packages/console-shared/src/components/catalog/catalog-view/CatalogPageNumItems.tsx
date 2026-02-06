@@ -1,11 +1,11 @@
-import * as React from 'react';
+import type { FC, ReactNode } from 'react';
 import { FlexItem } from '@patternfly/react-core';
 
 type CatalogPageNumItemsProps = {
-  children: React.ReactNode;
+  children: ReactNode;
 };
 
-const CatalogPageNumItems: React.FCC<CatalogPageNumItemsProps> = ({ children }) => (
+const CatalogPageNumItems: FC<CatalogPageNumItemsProps> = ({ children }) => (
   <FlexItem className="co-catalog-page__num-items">{children}</FlexItem>
 );
 

@@ -1,9 +1,11 @@
-import * as React from 'react';
+import type { ReactNode } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import { useDataViewPagination, DataViewTh } from '@patternfly/react-data-view';
 import { SortByDirection, ThProps } from '@patternfly/react-table';
 import * as _ from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom-v5-compat';
+import { ConsoleDataViewTh } from '@console/dynamic-plugin-sdk/src/api/internal-types';
 import { TableColumn, RowProps } from '@console/dynamic-plugin-sdk/src/extensions/console-types';
 import { useActiveColumns } from '@console/internal/components/factory/Table/active-columns-hook';
 import { sortResourceByValue } from '@console/internal/components/factory/Table/sort';
@@ -11,8 +13,8 @@ import { ConsoleDataViewColumn, GetDataViewRows, ResourceFilters } from './types
 import { useConsoleDataViewSort, getSortByDirection } from './useConsoleDataViewSort';
 
 const isDataViewConfigurableColumn = (
-  column: DataViewTh,
-): column is Extract<DataViewTh, { cell: React.ReactNode }> => {
+  column: ConsoleDataViewTh,
+): column is Extract<DataViewTh, { cell: ReactNode }> => {
   return (column as any)?.cell !== undefined;
 };
 
@@ -39,7 +41,7 @@ export const useConsoleDataViewData = <
 }) => {
   const { t } = useTranslation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const prevFiltersRef = React.useRef(filters);
+  const prevFiltersRef = useRef(filters);
 
   const pagination = useDataViewPagination({
     perPage: 50,
@@ -48,7 +50,7 @@ export const useConsoleDataViewData = <
   });
 
   // Reset pagination to page 1 when filters change
-  React.useEffect(() => {
+  useEffect(() => {
     const currentFilters = filters;
     const prevFilters = prevFiltersRef.current;
     const filtersChanged = !_.isEqual(currentFilters, prevFilters);
@@ -70,7 +72,7 @@ export const useConsoleDataViewData = <
     columnManagementID,
   });
 
-  const dataViewColumns = React.useMemo<ConsoleDataViewColumn<TData>[]>(
+  const dataViewColumns = useMemo<ConsoleDataViewColumn<TData>[]>(
     () =>
       activeColumns.map(({ id, title, sort, props }, index) => {
         const headerProps: ThProps = {
@@ -108,7 +110,7 @@ export const useConsoleDataViewData = <
     columns: dataViewColumns,
   });
 
-  const sortedData = React.useMemo(() => {
+  const sortedData = useMemo(() => {
     const sortColumn = dataViewColumns[sortBy.index];
     const sortDirection = getSortByDirection(sortBy.direction);
 
@@ -152,7 +154,7 @@ export const useConsoleDataViewData = <
   const dataViewRows = getDataViewRows(transformedData, dataViewColumns);
 
   // This code fixes a sorting issue but should be revisited to add more clarity
-  const dataViewColumnsWithSortApplied = React.useMemo(
+  const dataViewColumnsWithSortApplied = useMemo(
     () =>
       dataViewColumns.map((column) => {
         const shouldApplySort =

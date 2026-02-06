@@ -1,8 +1,9 @@
-import * as React from 'react';
-import { OverviewDetailItem } from '@openshift-console/plugin-shared/src';
+import type { FC } from 'react';
+import { useContext } from 'react';
 import { Card, CardBody, CardHeader, CardTitle, DescriptionList } from '@patternfly/react-core';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom-v5-compat';
+import { OverviewDetailItem } from '@console/internal/components/overview/OverviewDetailItem';
 import { resourcePathFromModel } from '@console/internal/components/utils/resource-link';
 import { NodeModel } from '@console/internal/models';
 import { getNodeAddresses } from '@console/shared/src/selectors/node';
@@ -11,8 +12,8 @@ import NodeRoles from '../NodeRoles';
 import { NodeDashboardContext } from './NodeDashboardContext';
 import NodeUptime from './NodeUptime';
 
-const DetailsCard: React.FC = () => {
-  const { obj } = React.useContext(NodeDashboardContext);
+const DetailsCard: FC = () => {
+  const { obj } = useContext(NodeDashboardContext);
   const detailsLink = `${resourcePathFromModel(NodeModel, obj.metadata.name)}/details`;
   const instanceType = obj.metadata.labels?.['beta.kubernetes.io/instance-type'];
   const zone = obj.metadata.labels?.['topology.kubernetes.io/zone'];

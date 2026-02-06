@@ -1,4 +1,4 @@
-import * as React from 'react';
+import { useState, useMemo } from 'react';
 import { Spinner } from '@patternfly/react-core';
 import { CheckCircleIcon, ExclamationCircleIcon } from '@patternfly/react-icons';
 import * as _ from 'lodash';
@@ -8,29 +8,36 @@ import {
   CatalogItem,
   CatalogItemBadge,
 } from '@console/dynamic-plugin-sdk/src/lib-core';
-import { parseList, PlainList, strConcat } from '@console/shared/src';
-import { Timestamp } from '@console/shared/src/components/datetime/Timestamp';
-import { ExternalLink } from '@console/shared/src/components/links/ExternalLink';
+import { parseList, strConcat } from '@console/shared/src';
 import { iconFor } from '../components';
 import { subscriptionFor } from '../components/operator-group';
-import { InstalledState, OLMAnnotation, CSVAnnotations } from '../components/operator-hub/index';
+import {
+  InstalledState,
+  OLMAnnotation,
+  CSVAnnotations,
+  InfrastructureFeature,
+  TokenizedAuthProvider,
+} from '../components/operator-hub/index';
+import { OperatorCapability } from '../components/operator-hub/operator-capability';
 import {
   OperatorVersionSelect,
   OperatorChannelSelect,
 } from '../components/operator-hub/operator-channel-version-select';
-import {
-  CapabilityLevel,
-  OperatorDescription,
-} from '../components/operator-hub/operator-hub-item-details';
+import { OperatorContainerImage } from '../components/operator-hub/operator-container-image';
+import { OperatorCreatedAt } from '../components/operator-hub/operator-created-at';
+import { OperatorDescription } from '../components/operator-hub/operator-hub-item-details';
 import {
   getInfrastructureFeatures,
   getPackageSource,
-  getSupportWorkflowUrl,
   getValidSubscription,
   isAWSSTSCluster,
   isAzureWIFCluster,
   isGCPWIFCluster,
 } from '../components/operator-hub/operator-hub-utils';
+import { OperatorInfrastructureFeatures } from '../components/operator-hub/operator-infrastructure-features';
+import { OperatorRepository } from '../components/operator-hub/operator-repository';
+import { OperatorSupport } from '../components/operator-hub/operator-support';
+import { OperatorValidSubscriptions } from '../components/operator-hub/operator-valid-subscriptions';
 import { PackageManifestModel, SubscriptionModel } from '../models';
 import { PackageManifestKind } from '../types';
 import { clusterServiceVersionFor } from '../utils/clusterserviceversions';
@@ -72,11 +79,8 @@ export const useOperatorCatalogItems = () => {
     clusterServiceVersionsLoaded,
     clusterServiceVersionsLoadError,
   ] = useClusterServiceVersions(namespace);
-  const [
-    cloudCredentials,
-    cloudCredentialsLoaded,
-    cloudCredentialsLoadError,
-  ] = useClusterCloudCredentialConfig();
+  // cloudCredentials are optional
+  const [cloudCredentials] = useClusterCloudCredentialConfig();
   const [
     infrastructure,
     infrastructureLoaded,
@@ -88,22 +92,19 @@ export const useOperatorCatalogItems = () => {
     authenticationLoadError,
   ] = useClusterAuthenticationConfig();
 
-  const [updateChannel, setUpdateChannel] = React.useState('');
-  const [updateVersion, setUpdateVersion] = React.useState('');
-  const [tokenizedAuth, setTokenizedAuth] = React.useState(null);
+  const [updateChannel, setUpdateChannel] = useState('');
+  const [updateVersion, setUpdateVersion] = useState('');
 
-  const loaded = React.useMemo(
+  const loaded = useMemo(
     () =>
       operatorGroupsLoaded &&
       operatorHubPackageManifestsLoaded &&
       subscriptionsLoaded &&
       clusterServiceVersionsLoaded &&
-      cloudCredentialsLoaded &&
       infrastructureLoaded &&
       authenticationLoaded,
     [
       authenticationLoaded,
-      cloudCredentialsLoaded,
       clusterServiceVersionsLoaded,
       infrastructureLoaded,
       operatorGroupsLoaded,
@@ -112,20 +113,18 @@ export const useOperatorCatalogItems = () => {
     ],
   );
 
-  const loadError = React.useMemo(
+  const loadError = useMemo(
     () =>
       strConcat(
         operatorGroupsLoadError,
         operatorHubPackageManifestsLoadError,
         subscriptionsLoadError,
         clusterServiceVersionsLoadError,
-        cloudCredentialsLoadError,
         infrastructureLoadError,
         authenticationLoadError,
       ),
     [
       authenticationLoadError,
-      cloudCredentialsLoadError,
       clusterServiceVersionsLoadError,
       infrastructureLoadError,
       operatorHubPackageManifestsLoadError,
@@ -138,17 +137,7 @@ export const useOperatorCatalogItems = () => {
   const clusterIsAzureWIF = isAzureWIFCluster(cloudCredentials, infrastructure, authentication);
   const clusterIsGCPWIF = isGCPWIFCluster(cloudCredentials, infrastructure, authentication);
 
-  React.useEffect(() => {
-    if (clusterIsAWSSTS) {
-      setTokenizedAuth('AWS');
-    } else if (clusterIsAzureWIF) {
-      setTokenizedAuth('Azure');
-    } else if (clusterIsGCPWIF) {
-      setTokenizedAuth('GCP');
-    }
-  }, [clusterIsAWSSTS, clusterIsAzureWIF, clusterIsGCPWIF]);
-
-  const items = React.useMemo(() => {
+  const items = useMemo(() => {
     if (!loaded || loadError) {
       return [];
     }
@@ -219,21 +208,40 @@ export const useOperatorCatalogItems = () => {
         const imgUrl = iconFor(pkg);
         const type = 'operator';
 
+        // Compute tokenizedAuth per operator based on its infrastructureFeatures
+        // Only set tokenizedAuth if both the cluster supports it AND the operator supports it
+        // (i.e., the operator's CSV annotations don't have token-auth-aws/azure/gcp=false)
+        let operatorTokenizedAuth: TokenizedAuthProvider | undefined;
+        if (clusterIsAWSSTS && infrastructureFeatures.includes(InfrastructureFeature.TokenAuth)) {
+          operatorTokenizedAuth = 'AWS';
+        } else if (
+          clusterIsAzureWIF &&
+          infrastructureFeatures.includes(InfrastructureFeature.TokenAuth)
+        ) {
+          operatorTokenizedAuth = 'Azure';
+        } else if (
+          clusterIsGCPWIF &&
+          infrastructureFeatures.includes(InfrastructureFeature.TokenAuthGCP)
+        ) {
+          operatorTokenizedAuth = 'GCP';
+        }
+
         // Build install parameters URL
-        const installParamsURL = new URLSearchParams({
+        const installParams: Record<string, string> = {
           pkg: pkg.metadata.name,
           catalog: catalogSource,
           catalogNamespace: catalogSourceNamespace,
           targetNamespace: namespace,
-          tokenizedAuth,
-        }).toString();
+        };
+        if (operatorTokenizedAuth) {
+          installParams.tokenizedAuth = operatorTokenizedAuth;
+        }
+        const installParamsURL = new URLSearchParams(installParams).toString();
 
         const installLink = `/operatorhub/subscribe?${installParamsURL}`;
         const uninstallLink = subscription
           ? `/k8s/ns/${subscription.metadata.namespace}/${SubscriptionModel.plural}/${subscription.metadata.name}?showDelete=true`
           : null;
-
-        const supportWorkflowUrl = getSupportWorkflowUrl(marketplaceSupportWorkflow);
 
         const cta =
           installed && uninstallLink
@@ -360,38 +368,40 @@ export const useOperatorCatalogItems = () => {
               },
               {
                 label: t('Capability level'),
-                value: <CapabilityLevel capability={capabilities} />,
+                value: <OperatorCapability packageManifest={pkg} />,
               },
               { label: t('Source'), value: source || '-' },
               { label: t('Provider'), value: provider || '-' },
               {
                 label: t('Infrastructure features'),
-                value: infrastructureFeatures?.length ? (
-                  <PlainList items={infrastructureFeatures} />
-                ) : (
-                  '-'
+                value: (
+                  <OperatorInfrastructureFeatures
+                    packageManifest={pkg}
+                    clusterIsAWSSTS={clusterIsAWSSTS}
+                    clusterIsAzureWIF={clusterIsAzureWIF}
+                    clusterIsGCPWIF={clusterIsGCPWIF}
+                  />
                 ),
               },
               {
                 label: t('Valid subscriptions'),
-                value: validSubscription?.length ? <PlainList items={validSubscription} /> : '-',
+                value: <OperatorValidSubscriptions packageManifest={pkg} />,
               },
               {
                 label: t('Repository'),
-                value: repository ? <ExternalLink href={repository} text={repository} /> : '-',
+                value: <OperatorRepository packageManifest={pkg} />,
               },
-              { label: t('Container image'), value: containerImage || '-' },
+              {
+                label: t('Container image'),
+                value: <OperatorContainerImage packageManifest={pkg} />,
+              },
               {
                 label: t('Created at'),
-                value: createdAt ? <Timestamp timestamp={createdAt} /> : '-',
+                value: <OperatorCreatedAt packageManifest={pkg} />,
               },
               {
                 label: t('Support'),
-                value: supportWorkflowUrl ? (
-                  <ExternalLink href={supportWorkflowUrl}>{t('Get support')}</ExternalLink>
-                ) : (
-                  support || '-'
-                ),
+                value: <OperatorSupport packageManifest={pkg} />,
               },
             ],
             descriptions: [
@@ -400,7 +410,6 @@ export const useOperatorCatalogItems = () => {
                   <OperatorDescription
                     catalogSource={catalogSource}
                     description={description}
-                    infraFeatures={infrastructureFeatures}
                     installed={installed}
                     isInstalling={isInstalling}
                     subscription={subscription}
@@ -453,7 +462,6 @@ export const useOperatorCatalogItems = () => {
     t,
     updateChannel,
     updateVersion,
-    tokenizedAuth,
   ]);
 
   return [items, loaded];

@@ -1,10 +1,8 @@
-import { guidedTour } from '@console/cypress-integration-tests/views/guided-tour';
 import { checkErrors, testName } from '../../../integration-tests-cypress/support';
 
-describe('Interacting with OperatorHub', () => {
+describe('Interacting with Operators', () => {
   before(() => {
     cy.login();
-    guidedTour.close();
     cy.createProjectWithCLI(testName);
   });
 
@@ -16,7 +14,7 @@ describe('Interacting with OperatorHub', () => {
     cy.deleteProjectWithCLI(testName);
   });
 
-  it('displays OperatorHub catalog items with expected available Operators', () => {
+  it('displays Operator catalog items with expected available Operators', () => {
     cy.log('navigate to Software Catalog');
     cy.visit(`/catalog/ns/${testName}`);
     cy.byTestID('page-heading').should('contain.text', 'Software Catalog');

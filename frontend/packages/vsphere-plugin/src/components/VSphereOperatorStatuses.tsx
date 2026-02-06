@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { ReactNode, FC } from 'react';
+import { useState } from 'react';
 import { ExpandableSection } from '@patternfly/react-core';
 import { CheckCircleIcon } from '@patternfly/react-icons/dist/esm/icons/check-circle-icon';
 import { ExclamationCircleIcon } from '@patternfly/react-icons/dist/esm/icons/exclamation-circle-icon';
@@ -8,9 +9,9 @@ import {
   t_color_green_50 as okColor,
   t_color_red_60 as errorColor,
 } from '@patternfly/react-tokens';
-import { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom-v5-compat';
+import { ConsoleTFunction } from '@console/dynamic-plugin-sdk';
 import {
   StatusPopupItem,
   StatusPopupSection,
@@ -32,7 +33,7 @@ const OperatorHealthLevel: { [key: string]: number } = {
 
 type OperatorHealthType = {
   message: string;
-  icon: React.ReactNode | undefined;
+  icon: ReactNode | undefined;
   level: number;
 };
 
@@ -47,7 +48,7 @@ const getWorstIconState = (states: OperatorHealthType[]): OperatorHealthType['ic
   return worst.icon;
 };
 
-const useOperatorHealth = (t: TFunction, name: string): OperatorHealthType => {
+const useOperatorHealth = (t: ConsoleTFunction, name: string): OperatorHealthType => {
   const [operator, isLoaded, error] = useK8sWatchResource<ClusterOperator>({
     groupVersionKind: { group: 'config.openshift.io', version: 'v1', kind: 'ClusterOperator' },
     name,
@@ -114,9 +115,9 @@ const useOperatorHealth = (t: TFunction, name: string): OperatorHealthType => {
   };
 };
 
-export const VSphereOperatorStatuses: React.FC = () => {
+export const VSphereOperatorStatuses: FC = () => {
   const { t } = useTranslation();
-  const [isExpanded, setIsExpanded] = React.useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const kubeControllerManager = useOperatorHealth(t, 'kube-controller-manager');
   const kubeApiServer = useOperatorHealth(t, 'kube-apiserver');

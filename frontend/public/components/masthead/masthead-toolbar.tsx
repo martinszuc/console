@@ -1,7 +1,10 @@
+import type { FC } from 'react';
 import { Fragment, useContext, useState, useRef, useCallback, useEffect } from 'react';
-import * as _ from 'lodash-es';
-import { useSelector, useDispatch } from 'react-redux';
+import * as _ from 'lodash';
 import { useTranslation } from 'react-i18next';
+import { useConsoleSelector } from '@console/shared/src/hooks/useConsoleSelector';
+import { useConsoleDispatch } from '@console/shared/src/hooks/useConsoleDispatch';
+import { useNavigate } from 'react-router-dom-v5-compat';
 import { BellIcon } from '@patternfly/react-icons/dist/esm/icons/bell-icon';
 import { EllipsisVIcon } from '@patternfly/react-icons/dist/esm/icons/ellipsis-v-icon';
 import { ThIcon } from '@patternfly/react-icons/dist/esm/icons/th-icon';
@@ -32,7 +35,7 @@ import { ExternalLinkButton } from '@console/shared/src/components/links/Externa
 import { LinkTo } from '@console/shared/src/components/links/LinkTo';
 import { CloudShellMastheadButton } from '@console/webterminal-plugin/src/components/cloud-shell/CloudShellMastheadButton';
 import { CloudShellMastheadAction } from '@console/webterminal-plugin/src/components/cloud-shell/CloudShellMastheadAction';
-import { useActivePerspective } from '@console/dynamic-plugin-sdk';
+import { getImpersonate, useActivePerspective } from '@console/dynamic-plugin-sdk';
 import * as UIActions from '../../actions/ui';
 import { flagPending, featureReducerName } from '../../reducers/features';
 import { authSvc } from '../../module/auth';
@@ -43,7 +46,6 @@ import { getReportBugLink } from '../../module/k8s/cluster-settings';
 import redhatLogoImg from '../../imgs/logos/redhat.svg';
 import { TourContext, TourActions } from '@console/app/src/components/tour';
 import { ClusterVersionModel, ConsoleLinkModel } from '../../models';
-import { RootState } from '../../redux';
 import { FeedbackModal } from '@patternfly/react-user-feedback';
 import '@patternfly/react-user-feedback/dist/esm/Feedback/Feedback.css';
 import { useFeedbackLocal } from './feedback-local';
@@ -53,6 +55,7 @@ import darkFeedbackImage from '@patternfly/react-user-feedback/dist/esm/images/r
 import QuickCreate, { QuickCreateImportFromGit, QuickCreateContainerImages } from '../QuickCreate';
 import { ThemeContext, THEME_DARK } from '../ThemeProvider';
 import { useK8sWatchResource } from '../utils/k8s-watch-hook';
+import { ImpersonateUserModal } from '../modals/impersonate-user-modal';
 
 const LAST_CONSOLE_ACTIVITY_TIMESTAMP_LOCAL_STORAGE_KEY = 'last-console-activity-timestamp';
 
@@ -77,7 +80,7 @@ interface FeedbackModalLocalizedProps {
   reportBugLink: ReturnType<typeof getReportBugLink>;
 }
 
-const FeedbackModalLocalized: React.FCC<FeedbackModalLocalizedProps> = ({
+const FeedbackModalLocalized: FC<FeedbackModalLocalizedProps> = ({
   isOpen,
   onClose,
   reportBugLink,
@@ -104,7 +107,7 @@ interface StatusButtonProps {
   };
 }
 
-const SystemStatusButton: React.FCC<StatusButtonProps> = ({ statusPageData }) => {
+const SystemStatusButton: FC<StatusButtonProps> = ({ statusPageData }) => {
   const { t } = useTranslation();
   return !_.isEmpty(_.get(statusPageData, 'incidents')) ? (
     <ExternalLinkButton
@@ -123,7 +126,7 @@ interface MastheadAction {
   callback?: (e) => void;
   externalLink?: boolean;
   image?: React.ReactNode;
-  component?: React.FC;
+  component?: FC;
   dataTest?: string;
 }
 
@@ -139,20 +142,26 @@ interface MastheadToolbarContentsProps {
   isMastheadStacked: boolean;
 }
 
+// TODO remove this code, the plugin should use an appropriate extension
+const isTroubleshootingPanelPluginActive =
+  Array.isArray(window.SERVER_FLAGS.consolePlugins) &&
+  window.SERVER_FLAGS.consolePlugins.includes('troubleshooting-panel-console-plugin');
+
 // TODO break this down into smaller components and hooks
-const MastheadToolbarContents: React.FCC<MastheadToolbarContentsProps> = ({
+const MastheadToolbarContents: FC<MastheadToolbarContentsProps> = ({
   consoleLinks,
   cv,
   isMastheadStacked,
 }) => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const fireTelemetryEvent = useTelemetry();
   const { tourDispatch, tour } = useContext(TourContext);
   const authEnabledFlag = useFlag(FLAGS.AUTH_ENABLED);
   const consoleCLIDownloadFlag = useFlag(FLAGS.CONSOLE_CLI_DOWNLOAD);
   const openshiftFlag = useFlag(FLAGS.OPENSHIFT);
   const quickstartFlag = useFlag(FLAGS.CONSOLE_QUICKSTART);
-  const dispatch = useDispatch();
+  const dispatch = useConsoleDispatch();
   const [activeNamespace] = useActiveNamespace();
   const [activePerspective] = useActivePerspective();
   const [requestTokenURL, externalLoginCommand] = useCopyLoginCommands();
@@ -160,15 +169,15 @@ const MastheadToolbarContents: React.FCC<MastheadToolbarContentsProps> = ({
     t('public~Login with this command'),
     externalLoginCommand,
   );
-  const { clusterID, alertCount, canAccessNS } = useSelector((state: RootState) => ({
+  const { clusterID, alertCount, canAccessNS, impersonate } = useConsoleSelector((state) => ({
     clusterID: state.UI.get('clusterID'),
     alertCount: state.observe.getIn(['alertCount']),
     canAccessNS: !!state[featureReducerName].get(FLAGS.CAN_GET_NS),
+    impersonate: getImpersonate(state),
   }));
 
   // Use centralized user hook for user data
   const { displayName, username } = useUser();
-
   const [isAppLauncherDropdownOpen, setIsAppLauncherDropdownOpen] = useState(false);
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isKebabDropdownOpen, setIsKebabDropdownOpen] = useState(false);
@@ -176,6 +185,7 @@ const MastheadToolbarContents: React.FCC<MastheadToolbarContentsProps> = ({
   const [statusPageData, setstatusPageData] = useState(null);
   const [showAboutModal, setShowAboutModal] = useState(false);
   const [isFeedbackModalOpen, setIsFeedbackModalOpen] = useState(false);
+  const [isImpersonateModalOpen, setIsImpersonateModalOpen] = useState(false);
   const applicationLauncherMenuRef = useRef(null);
   const helpMenuRef = useRef(null);
   const userMenuRef = useRef(null);
@@ -243,9 +253,6 @@ const MastheadToolbarContents: React.FCC<MastheadToolbarContentsProps> = ({
   };
 
   const getLaunchActions = () => {
-    const isTroubleshootingPanelEnabled = Array.isArray(window.SERVER_FLAGS.consolePlugins)
-      ? window.SERVER_FLAGS.consolePlugins.includes('troubleshooting-panel-console-plugin')
-      : false;
     const launcherItems = getAdditionalLinks(consoleLinks, 'ApplicationMenu');
 
     const sections: MastheadSection[] = [];
@@ -287,7 +294,7 @@ const MastheadToolbarContents: React.FCC<MastheadToolbarContentsProps> = ({
     }
 
     // This should be removed when the extension to add items to the masthead is implemented: https://issues.redhat.com/browse/OU-488
-    if (isTroubleshootingPanelEnabled && activePerspective === 'admin') {
+    if (isTroubleshootingPanelPluginActive && activePerspective === 'admin') {
       sections.push({
         name: t('public~Troubleshooting'),
         isSection: true,
@@ -517,6 +524,30 @@ const MastheadToolbarContents: React.FCC<MastheadToolbarContentsProps> = ({
         component: LinkTo('/user-preferences'),
       },
     ];
+
+    // Add impersonate option if user is currently impersonating
+    if (impersonate) {
+      userActions.unshift({
+        label: t('public~Stop impersonating'),
+        callback: () => {
+          dispatch(UIActions.stopImpersonate());
+          // Use full page reload when stopping to ensure clean state
+          setTimeout(() => {
+            window.location.href = window.SERVER_FLAGS.basePath || '/';
+          }, 0);
+        },
+        dataTest: 'stop-impersonate',
+      });
+    }
+
+    // Add impersonate option if not currently impersonating
+    if (!impersonate) {
+      userActions.unshift({
+        label: t('public~Impersonate User'),
+        callback: () => setIsImpersonateModalOpen(true),
+        dataTest: 'impersonate-user',
+      });
+    }
 
     if (authEnabledFlag) {
       const logout = (e) => {
@@ -812,6 +843,22 @@ const MastheadToolbarContents: React.FCC<MastheadToolbarContentsProps> = ({
           onClose={() => setIsFeedbackModalOpen(false)}
         />
       ) : null}
+      <ImpersonateUserModal
+        isOpen={isImpersonateModalOpen}
+        onClose={() => setIsImpersonateModalOpen(false)}
+        onImpersonate={(userName: string, groups: string[]) => {
+          if (groups && groups.length > 0) {
+            dispatch(UIActions.startImpersonate('UserWithGroups', userName, groups));
+          } else {
+            dispatch(UIActions.startImpersonate('User', userName));
+          }
+          setIsImpersonateModalOpen(false);
+          // Redirect to projects page to prevent RBAC issues for impersonated users
+          navigate('/k8s/cluster/projects');
+        }}
+        prefilledUsername=""
+        isUsernameReadonly={false}
+      />
     </>
   );
 };
@@ -820,7 +867,7 @@ interface MastheadToolbarProps {
   isMastheadStacked: boolean;
 }
 
-export const MastheadToolbar: React.FCC<MastheadToolbarProps> = ({ isMastheadStacked }) => {
+export const MastheadToolbar: FC<MastheadToolbarProps> = ({ isMastheadStacked }) => {
   const consoleLinkFlag = useFlag(FLAGS.CONSOLE_LINK);
   const clusterVersionFlag = useFlag(FLAGS.CLUSTER_VERSION);
 

@@ -1,6 +1,7 @@
-import * as React from 'react';
+import type { FC } from 'react';
+import { useMemo, Suspense } from 'react';
 import { Link } from 'react-router-dom-v5-compat';
-import * as _ from 'lodash-es';
+import * as _ from 'lodash';
 import {
   Button,
   Content,
@@ -25,9 +26,11 @@ import {
   getNameCellProps,
   actionsCellProps,
   cellIsStickyProps,
-  initialFiltersDefault,
 } from '@console/app/src/components/data-view/ConsoleDataView';
-import { GetDataViewRows } from '@console/app/src/components/data-view/types';
+import type {
+  ConsoleDataViewColumn,
+  GetDataViewRows,
+} from '@console/app/src/components/data-view/types';
 import { useCanEditIdentityProviders, useOAuthData } from '@console/shared/src/hooks/oauth';
 import { DASH } from '@console/shared/src/constants/ui';
 import { useTranslation } from 'react-i18next';
@@ -41,7 +44,7 @@ const tableColumnInfo = [
   { id: 'actions' },
 ];
 
-const getDataViewRows: GetDataViewRows<UserKind, undefined> = (data, columns) => {
+const getDataViewRows: GetDataViewRows<UserKind> = (data, columns) => {
   return data.map(({ obj: user }) => {
     const rowCells = {
       [tableColumnInfo[0].id]: {
@@ -122,9 +125,9 @@ const NoDataEmptyMsg = () => {
   );
 };
 
-const useUsersColumns = () => {
+const useUsersColumns = (): ConsoleDataViewColumn<UserKind>[] => {
   const { t } = useTranslation();
-  return React.useMemo(
+  return useMemo(
     () => [
       {
         title: t('public~Name'),
@@ -160,7 +163,7 @@ const useUsersColumns = () => {
   );
 };
 
-export const UserList: React.FCC<UserListProps> = (props) => {
+export const UserList: FC<UserListProps> = (props) => {
   const { t } = useTranslation();
   const columns = useUsersColumns();
   const { data, loaded } = props;
@@ -171,22 +174,21 @@ export const UserList: React.FCC<UserListProps> = (props) => {
   }
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView<UserKind>
         {...props}
         data={data}
         loaded={loaded}
         label={t('public~Users')}
         columns={columns}
-        initialFilters={initialFiltersDefault}
         getDataViewRows={getDataViewRows}
         hideColumnManagement={true}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 
-export const UserPage: React.FC<UserPageProps> = (props) => {
+export const UserPage: FC<UserPageProps> = (props) => {
   const { t } = useTranslation();
   return (
     <ListPage
@@ -201,7 +203,7 @@ export const UserPage: React.FC<UserPageProps> = (props) => {
   );
 };
 
-const RoleBindingsTab: React.FC<RoleBindingsTabProps> = ({ obj }) => (
+const RoleBindingsTab: FC<RoleBindingsTabProps> = ({ obj }) => (
   <RoleBindingsPage
     showTitle={false}
     staticFilters={[{ 'role-binding-user': obj.metadata.name }]}
@@ -210,7 +212,7 @@ const RoleBindingsTab: React.FC<RoleBindingsTabProps> = ({ obj }) => (
   />
 );
 
-const UserDetails: React.FC<UserDetailsProps> = ({ obj }) => {
+const UserDetails: FC<UserDetailsProps> = ({ obj }) => {
   const { t } = useTranslation();
   return (
     <PaneBody>
@@ -233,7 +235,7 @@ const UserDetails: React.FC<UserDetailsProps> = ({ obj }) => {
   );
 };
 
-export const UserDetailsPage: React.FC = (props) => {
+export const UserDetailsPage: FC = (props) => {
   return (
     <DetailsPage
       {...props}

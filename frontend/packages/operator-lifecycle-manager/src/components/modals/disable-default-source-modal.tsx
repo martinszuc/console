@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC, FormEvent } from 'react';
+import { useCallback } from 'react';
 import * as _ from 'lodash';
 import { useTranslation } from 'react-i18next';
 import {
@@ -13,7 +14,7 @@ import { YellowExclamationTriangleIcon } from '@console/shared';
 import { usePromiseHandler } from '@console/shared/src/hooks/promise-handler';
 import { OperatorHubKind } from '../operator-hub';
 
-const DisableDefaultSourceModal: React.FC<DisableSourceModalProps> = ({
+const DisableDefaultSourceModal: FC<DisableSourceModalProps> = ({
   kind,
   operatorHub,
   sourceName,
@@ -22,8 +23,8 @@ const DisableDefaultSourceModal: React.FC<DisableSourceModalProps> = ({
 }) => {
   const [handlePromise, inProgress, errorMessage] = usePromiseHandler();
   const { t } = useTranslation();
-  const submit = React.useCallback(
-    (event: React.FormEvent<EventTarget>): void => {
+  const submit = useCallback(
+    (event: FormEvent<EventTarget>): void => {
       event.preventDefault();
       const currentSources = _.get(operatorHub, 'spec.sources', []);
       const patch = [
@@ -56,7 +57,7 @@ const DisableDefaultSourceModal: React.FC<DisableSourceModalProps> = ({
       </ModalTitle>
       <ModalBody>
         {t(
-          'olm~By disabling a default source, the operators it provides will no longer appear in OperatorHub and any operator that has been installed from this source will no longer receive updates until the source is re-enabled. Disabling the source will also remove the corresponding OperatorSource and CatalogSource resources from the cluster.',
+          'olm~By disabling a default source, the operators it provides will no longer appear in Software Catalog and any operator that has been installed from this source will no longer receive updates until the source is re-enabled. Disabling the source will also remove the corresponding OperatorSource and CatalogSource resources from the cluster.',
         )}
       </ModalBody>
       <ModalSubmitFooter

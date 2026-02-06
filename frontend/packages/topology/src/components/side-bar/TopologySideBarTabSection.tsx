@@ -1,11 +1,11 @@
-import * as React from 'react';
+import type { FC, ReactNode } from 'react';
 import './TopologySideBarTabSection.scss';
 
 interface TopologySideBarTabSectionProps {
-  children?: React.ReactNode;
+  children?: ReactNode;
 }
 
-const TopologySideBarTabSection: React.FCC<TopologySideBarTabSectionProps> = ({ children }) => {
+const TopologySideBarTabSection: FC<TopologySideBarTabSectionProps> = ({ children }) => {
   return <div className="ocs-sidebar-tabsection">{children}</div>;
 };
 

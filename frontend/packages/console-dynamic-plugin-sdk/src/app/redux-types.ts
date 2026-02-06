@@ -1,4 +1,6 @@
 import { Map as ImmutableMap } from 'immutable';
+import type { AnyAction } from 'redux';
+import type { ThunkDispatch } from 'redux-thunk';
 import type { UserKind } from '@console/internal/module/k8s/types';
 import { UserInfo } from '../extensions/console-types';
 
@@ -13,6 +15,7 @@ export type ImpersonateKind = {
   kind: string;
   name: string;
   subprotocols: string[];
+  groups?: string[];
 };
 
 export type CoreState = {
@@ -26,3 +29,5 @@ export type SDKStoreState = {
   sdkCore: CoreState;
   k8s: K8sState;
 };
+
+export type SDKDispatch = ThunkDispatch<SDKStoreState, undefined, AnyAction>;

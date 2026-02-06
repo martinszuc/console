@@ -1,4 +1,3 @@
-import { guidedTour } from '@console/cypress-integration-tests/views/guided-tour';
 import {
   devNavigationMenu,
   displayOptions,
@@ -76,11 +75,11 @@ export const topologyPage = {
     });
   },
   verifyToplogyPageNotEmpty: () => {
-    cy.get('*[class="odc-topology"]').then(($el) => {
-      if ($el.find('[data-test="no-resources-found"]').length) {
-        throw new Error(`No workload has been created till now.`);
-      }
-    });
+    cy.get('.odc-topology', { timeout: 60000 })
+      .should('be.visible')
+      .within(() => {
+        cy.get('[data-test="no-resources-found"]').should('not.exist');
+      });
   },
   verifyContextMenu: () => cy.get(topologyPO.graph.contextMenu).should('be.visible'),
   verifyNoWorkLoadsText: (text: string) =>
@@ -349,7 +348,6 @@ export const topologyPage = {
   clickOnApplicationGroupings: (appName: string) => {
     cy.reload();
     app.waitForLoad();
-    guidedTour.close();
     cy.get('[data-id="odc-topology-graph"]').click();
     const id = `[data-id="group:${appName}"] .odc-resource-icon-application`;
     cy.log(id);
@@ -366,7 +364,6 @@ export const topologyPage = {
   verifyApplicationGroupingsDeleted: (appName: string) => {
     cy.reload();
     app.waitForLoad();
-    guidedTour.close();
     const id = `[data-id="group:${appName}"]`;
     cy.get(id, { timeout: 50000 }).should('not.exist');
   },

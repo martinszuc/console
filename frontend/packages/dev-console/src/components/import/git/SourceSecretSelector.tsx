@@ -1,4 +1,5 @@
-import { FCC, useEffect } from 'react';
+import type { FC } from 'react';
+import { useEffect } from 'react';
 import { FormGroup, FormHelperText, HelperText, HelperTextItem } from '@patternfly/react-core';
 import { useFormikContext, FormikValues } from 'formik';
 import * as _ from 'lodash';
@@ -13,7 +14,7 @@ import SourceSecretDropdown from '../../dropdown/SourceSecretDropdown';
 const CREATE_SOURCE_SECRET = 'create-source-secret';
 const CLEAR_SOURCE_SECRET = 'clear-source-secret';
 
-const SourceSecretSelector: FCC<{
+const SourceSecretSelector: FC<{
   formContextField?: string;
 }> = ({ formContextField }) => {
   const fieldPrefix = formContextField ? `${formContextField}.` : '';

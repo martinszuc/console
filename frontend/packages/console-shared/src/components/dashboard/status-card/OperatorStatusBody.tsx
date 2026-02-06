@@ -1,17 +1,18 @@
-import * as React from 'react';
+import type { FC, ComponentType } from 'react';
+import { useCallback } from 'react';
 import * as _ from 'lodash';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom-v5-compat';
 import { GetOperatorsWithStatuses, OperatorRowProps } from '@console/dynamic-plugin-sdk';
+import type { LazyLoader } from '@console/internal/components/utils/async';
 import type { FirehoseResourcesResult } from '@console/internal/components/utils/types';
-import { LazyLoader } from '@console/plugin-sdk';
 import { getMostImportantStatuses } from './state-utils';
 import { HealthState } from './states';
 import StatusItem, { StatusPopupSection } from './StatusPopup';
 
 import './operator-body.scss';
 
-export const OperatorsSection: React.FC<OperatorsSectionProps> = ({
+export const OperatorsSection: FC<OperatorsSectionProps> = ({
   resources,
   getOperatorsWithStatuses,
   title,
@@ -27,7 +28,7 @@ export const OperatorsSection: React.FC<OperatorsSectionProps> = ({
     a.operators[0].metadata.name.localeCompare(b.operators[0].metadata.name),
   );
   const operatorsHealthy = sortedOperatorStatuses.every((o) => o.status.health === HealthState.OK);
-  const RowLoading = React.useCallback(() => <div className="co-status__operator-skeleton" />, []);
+  const RowLoading = useCallback(() => <div className="co-status__operator-skeleton" />, []);
   if (!operatorStatuses.length) {
     return null;
   }
@@ -78,14 +79,14 @@ type OperatorsSectionProps = {
   getOperatorsWithStatuses: GetOperatorsWithStatuses;
   title: string;
   linkTo: string;
-  Row: React.ComponentType<
+  Row: ComponentType<
     OperatorRowProps & {
       LoadingComponent: () => JSX.Element;
-      Component: React.ComponentType<OperatorRowProps> | LazyLoader<OperatorRowProps>;
+      Component: ComponentType<OperatorRowProps> | LazyLoader<OperatorRowProps>;
       key: string;
       isResolved: boolean;
     }
   >;
   isResolved: boolean;
-  Component: React.ComponentType<OperatorRowProps> | LazyLoader<OperatorRowProps>;
+  Component: ComponentType<OperatorRowProps> | LazyLoader<OperatorRowProps>;
 };

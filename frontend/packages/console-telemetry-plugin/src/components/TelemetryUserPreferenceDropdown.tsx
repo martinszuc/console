@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC, RefObject } from 'react';
+import { useState } from 'react';
 import {
   FormGroup,
   FormHelperText,
@@ -25,7 +26,7 @@ type TelemetryAnalyticsSelectOptions = {
   isSelected: boolean;
 };
 
-const TelemetryAnalyticsSelect: React.FC<{
+const TelemetryAnalyticsSelect: FC<{
   disabled: boolean;
   value?: string;
   onChange: (selectedOption: TelemetryAnalyticsSelectOptions) => void;
@@ -45,10 +46,10 @@ const TelemetryAnalyticsSelect: React.FC<{
       isSelected: value === USER_TELEMETRY_ANALYTICS.DENY,
     },
   ];
-  const [isOpen, setIsOpen] = React.useState(false);
+  const [isOpen, setIsOpen] = useState(false);
   const selection = options.find((option) => option.isSelected)?.value;
 
-  const toggle = (toggleRef: React.RefObject<MenuToggleElement>) => (
+  const toggle = (toggleRef: RefObject<MenuToggleElement>) => (
     <MenuToggle
       ref={toggleRef}
       onClick={() => setIsOpen(!isOpen)}
@@ -66,8 +67,6 @@ const TelemetryAnalyticsSelect: React.FC<{
     <Select
       toggle={toggle}
       isOpen={isOpen}
-      toggleId="telemetry"
-      // @ts-expect-error FIXME: PatternFly's onSelect is typed wrong (value should be any)
       onSelect={(_, selectedValue?: TelemetryAnalyticsSelectOptions) => {
         if (selectedValue) {
           onChange(selectedValue);
@@ -75,7 +74,6 @@ const TelemetryAnalyticsSelect: React.FC<{
         setIsOpen(false);
       }}
       aria-label={t('console-telemetry-plugin~Select option')}
-      maxHeight={300}
       onOpenChange={(open) => setIsOpen(open)}
     >
       <SelectList>
@@ -94,7 +92,7 @@ const TelemetryAnalyticsSelect: React.FC<{
   );
 };
 
-const TelemetryUserPreferenceDropdown: React.FC = () => {
+const TelemetryUserPreferenceDropdown: FC = () => {
   const { t } = useTranslation();
   const fireTelemetryEvent = useTelemetry();
 

@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC, ReactNode } from 'react';
+import { useMemo } from 'react';
 import { DataListCell } from '@patternfly/react-core';
 import { Node, observer } from '@patternfly/react-topology';
 import { CpuCellComponent } from '@console/topology/src/components/list-view/cells/CpuCell';
@@ -13,13 +14,13 @@ import {
 import { usePodsForRevisions } from '../../utils/usePodsForRevisions';
 
 interface KnativeRevisionListViewNodeProps {
-  children?: React.ReactNode;
+  children?: ReactNode;
   item: Node;
   selectedIds: string[];
   onSelect: (ids: string[]) => void;
 }
 
-const ObservedKnativeRevisionListViewNode: React.FCC<KnativeRevisionListViewNodeProps> = ({
+const ObservedKnativeRevisionListViewNode: FC<KnativeRevisionListViewNodeProps> = ({
   item,
   selectedIds,
   onSelect,
@@ -28,7 +29,7 @@ const ObservedKnativeRevisionListViewNode: React.FCC<KnativeRevisionListViewNode
   const resource = getTopologyResourceObject(item.getData());
   const metrics = useOverviewMetrics();
   const { loaded, pods } = usePodsForRevisions(resource.metadata.uid, resource.metadata.namespace);
-  const podData = React.useMemo(() => {
+  const podData = useMemo(() => {
     if (!loaded) {
       return null;
     }
@@ -43,7 +44,7 @@ const ObservedKnativeRevisionListViewNode: React.FCC<KnativeRevisionListViewNode
     };
   }, [loaded, pods, resource]);
 
-  const metricStats = React.useMemo(() => {
+  const metricStats = useMemo(() => {
     if (!podData) {
       return null;
     }

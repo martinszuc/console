@@ -420,8 +420,13 @@ To upgrade yarn itself, download a new yarn release from
 Note that when upgrading @patternfly packages, we've seen in the past that it can cause the JavaScript heap to run out of memory, or the bundle being too large if multiple versions of the same @patternfly package is pulled in. To increase efficiency, run the following after updating packages:
 
 ```
-npx yarn-deduplicate --scopes @patternfly
+yarn run dedupe-deps --scopes @patternfly
 ```
+
+Please note that PatternFly releases do not strictly follow semantic versioning. Therefore, it's important
+to use the `~` semver range operator to avoid unintended minor version bumps of PatternFly dependencies.
+Also note that such semver ranges may be used when building Console dynamic plugins for checking version
+compatibility.
 
 #### Supported Browsers
 
@@ -494,8 +499,6 @@ Currently this feature is behind feature gate.
 - [console-dynamic-plugin-sdk](./frontend/packages/console-dynamic-plugin-sdk/README.md)
 [[API]](./frontend/packages/console-dynamic-plugin-sdk/docs/api.md)
 [[Console Extensions]](./frontend/packages/console-dynamic-plugin-sdk/docs/console-extensions.md)
-
-- [console-plugin-shared](./frontend/packages/console-plugin-shared/README.md)
 
 - [dev-console](./frontend/packages/dev-console/README.md)
 

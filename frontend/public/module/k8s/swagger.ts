@@ -1,4 +1,4 @@
-import * as _ from 'lodash-es';
+import * as _ from 'lodash';
 
 import { STORAGE_PREFIX } from '@console/shared/src/constants';
 import { coFetchJSON } from '../../co-fetch';
@@ -37,6 +37,7 @@ export const fetchSwagger = async (): Promise<SwaggerDefinitions> => {
       return null;
     }
     swaggerDefinitions = response.definitions;
+    window.dispatchEvent(new Event('console_swagger_refresh'));
     return swaggerDefinitions;
   } catch (e) {
     // eslint-disable-next-line no-console

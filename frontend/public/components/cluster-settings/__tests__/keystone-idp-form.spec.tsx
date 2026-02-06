@@ -1,4 +1,4 @@
-import { cleanup } from '@testing-library/react';
+import { cleanup, act } from '@testing-library/react';
 import {
   renderWithProviders,
   verifyInputField,
@@ -17,8 +17,10 @@ describe('Add Identity Provider: Keystone Authentication', () => {
     setupFileReaderMock();
   });
 
-  beforeEach(() => {
-    renderWithProviders(<AddKeystonePage />);
+  beforeEach(async () => {
+    await act(async () => {
+      renderWithProviders(<AddKeystonePage />);
+    });
   });
 
   afterEach(() => {
@@ -65,27 +67,23 @@ describe('Add Identity Provider: Keystone Authentication', () => {
     });
   });
 
-  it('should render the CA file label and elements', () => {
-    verifyIDPFileFields({
+  it('should render the CA file label and elements', async () => {
+    await verifyIDPFileFields({
       inputLabel: 'CA file',
-      idPrefix: 'ca-file-input',
     });
   });
 
-  it('should render the certificate label and elements', () => {
-    verifyIDPFileFields({
+  it('should render the certificate label and elements', async () => {
+    await verifyIDPFileFields({
       inputLabel: 'Certificate',
-      idPrefix: 'cert-file-input',
-      helpText: 'PEM-encoded TLS client certificate to present when connecting to the server.',
+      helpText: 'PEM-encoded TLS client certificate file',
     });
   });
 
-  it('should render the key label and elements', () => {
-    verifyIDPFileFields({
-      inputLabel: 'Certificate',
-      idPrefix: 'key-file-input',
-      helpText:
-        'PEM-encoded TLS private key for the client certificate. Required if certificate is specified.',
+  it('should render the key label and elements', async () => {
+    await verifyIDPFileFields({
+      inputLabel: 'Key',
+      helpText: 'PEM-encoded TLS private key file',
     });
   });
 

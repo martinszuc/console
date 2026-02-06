@@ -1,10 +1,9 @@
-import { guidedTour } from '@console/cypress-integration-tests/views/guided-tour';
 import { checkErrors } from '../../../integration-tests-cypress/support';
 import { operator, GlobalInstalledNamespace, TestOperandProps } from '../views/operator.view';
 
 const testOperator = {
   name: 'Data Grid',
-  operatorHubCardTestID: 'operator-Data Grid',
+  operatorCardTestID: 'operator-Data Grid',
 };
 
 const testOperand: TestOperandProps = {
@@ -19,8 +18,7 @@ const testOperand: TestOperandProps = {
 describe(`Globally installing "${testOperator.name}" operator in ${GlobalInstalledNamespace}`, () => {
   before(() => {
     cy.login();
-    guidedTour.close();
-    operator.install(testOperator.name, testOperator.operatorHubCardTestID);
+    operator.install(testOperator.name, testOperator.operatorCardTestID);
   });
 
   afterEach(() => {

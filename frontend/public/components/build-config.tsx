@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC } from 'react';
+import { useMemo, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useParams } from 'react-router-dom-v5-compat';
 import PaneBody from '@console/shared/src/components/layout/PaneBody';
@@ -33,7 +34,6 @@ import {
   actionsCellProps,
   cellIsStickyProps,
   getNameCellProps,
-  initialFiltersDefault,
   ConsoleDataView,
 } from '@console/app/src/components/data-view/ConsoleDataView';
 import { GetDataViewRows } from '@console/app/src/components/data-view/types';
@@ -46,7 +46,7 @@ import LazyActionMenu from '@console/shared/src/components/actions/LazyActionMen
 
 const BuildConfigsReference: K8sResourceKindReference = referenceForModel(BuildConfigModel);
 
-export const BuildConfigsDetails: React.FCC<BuildConfigsDetailsProps> = ({ obj: buildConfig }) => {
+export const BuildConfigsDetails: FC<BuildConfigsDetailsProps> = ({ obj: buildConfig }) => {
   const hasPipeline = buildConfig.spec.strategy.type === BuildStrategyType.JenkinsPipeline;
   const { t } = useTranslation();
   return (
@@ -94,7 +94,7 @@ const getLatestBuild = (builds) => {
   }, builds[0]);
 };
 
-export const BuildConfigsDetailsPage: React.FC<DetailsPageProps> = (props) => {
+export const BuildConfigsDetailsPage: FC<DetailsPageProps> = (props) => {
   const buildModel = referenceForModel(BuildModel);
   const [builds, buildsLoaded, buildsLoadError] = useK8sWatchResource<K8sResourceKind[]>({
     kind: buildModel,
@@ -134,7 +134,7 @@ const tableColumnInfo = [
   { id: 'actions' },
 ];
 
-const getDataViewRows: GetDataViewRows<BuildConfig, undefined> = (data, columns) => {
+const getDataViewRows: GetDataViewRows<BuildConfig> = (data, columns) => {
   return data.map(({ obj }) => {
     const { name, namespace } = obj.metadata;
     const latestBuild = obj?.latestBuild;
@@ -217,7 +217,7 @@ const getBuildStatus = (buildConfig: BuildConfig) => {
 
 const useBuildConfigColumns = (): TableColumn<BuildConfig>[] => {
   const { t } = useTranslation();
-  const columns = React.useMemo(() => {
+  const columns = useMemo(() => {
     return [
       {
         title: t('public~Name'),
@@ -280,7 +280,7 @@ const useBuildConfigColumns = (): TableColumn<BuildConfig>[] => {
   return columns;
 };
 
-export const BuildConfigsList: React.FCC<BuildConfigsListProps> = ({ data, loaded, ...props }) => {
+export const BuildConfigsList: FC<BuildConfigsListProps> = ({ data, loaded, ...props }) => {
   const columns = useBuildConfigColumns();
   const buildModel = referenceForModel(BuildModel);
   const BUILDCONFIG_TO_BUILD_REFERENCE_LABEL = 'openshift.io/build-config.name';
@@ -290,7 +290,7 @@ export const BuildConfigsList: React.FCC<BuildConfigsListProps> = ({ data, loade
     isList: true,
   });
 
-  const buildData = React.useMemo<CustomData>(
+  const buildData = useMemo<CustomData>(
     () => ({
       builds: {
         latestByBuildName: builds.reduce<Record<string, K8sResourceKind>>((acc, build) => {
@@ -321,24 +321,23 @@ export const BuildConfigsList: React.FCC<BuildConfigsListProps> = ({ data, loade
     : [];
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView
         {...props}
         label={BuildConfigModel.labelPlural}
         data={buildResource}
         loaded={loaded}
         columns={columns}
-        initialFilters={initialFiltersDefault}
         getDataViewRows={getDataViewRows}
         hideColumnManagement={true}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 
 BuildConfigsList.displayName = 'BuildConfigsList';
 
-export const BuildConfigsPage: React.FC<BuildConfigsPageProps> = (props) => {
+export const BuildConfigsPage: FC<BuildConfigsPageProps> = (props) => {
   const { t } = useTranslation();
   const params = useParams();
   const allStrategies = [

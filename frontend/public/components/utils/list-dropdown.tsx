@@ -1,5 +1,6 @@
-import * as _ from 'lodash-es';
-import * as React from 'react';
+import type { FC, ReactElement } from 'react';
+import * as _ from 'lodash';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import * as fuzzy from 'fuzzysearch';
 import { Alert } from '@patternfly/react-core';
 import { useFlag } from '@console/shared/src/hooks/flag';
@@ -51,7 +52,7 @@ export interface ListDropdownProps {
   loadError?: boolean;
 }
 
-const ListDropdown_: React.FCC<ListDropdownProps> = ({
+const ListDropdown_: FC<ListDropdownProps> = ({
   desc,
   placeholder,
   loaded,
@@ -67,20 +68,17 @@ const ListDropdown_: React.FCC<ListDropdownProps> = ({
   ...props
 }) => {
   const { t } = useTranslation();
-  const [items, setItems] = React.useState<{
+  const [items, setItems] = useState<{
     [key: string]: { kindLabel: string; name: string; resource: K8sResourceKind };
   }>({});
-  const [selectedKey, setSelectedKey] = React.useState<string | undefined>(
+  const [selectedKey, setSelectedKey] = useState<string | undefined>(
     props.selectedKey ? getKey(props.selectedKey, props.selectedKeyKind) : undefined,
   );
-  const [title, setTitle] = React.useState<React.ReactNode>(
-    loaded ? placeholder : <LoadingInline />,
-  );
+  const [title, setTitle] = useState<React.ReactNode>(loaded ? placeholder : <LoadingInline />);
 
-  const autocompleteFilter = (text: string, item: React.ReactElement) =>
-    fuzzy(text, item.props.name);
+  const autocompleteFilter = (text: string, item: ReactElement) => fuzzy(text, item.props.name);
 
-  const handleOnChange = React.useCallback(
+  const handleOnChange = useCallback(
     (key: string) => {
       if (_.find(actionItems, { actionKey: key })) {
         onChange(key);
@@ -95,7 +93,7 @@ const ListDropdown_: React.FCC<ListDropdownProps> = ({
     [actionItems, items, onChange],
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (loadError) {
       setTitle(
         <div className="cos-error-title">{t('public~Error loading {{desc}}', { desc })}</div>,
@@ -154,7 +152,7 @@ const ListDropdown_: React.FCC<ListDropdownProps> = ({
     selectedKey,
   ]);
 
-  const renderedItems = React.useMemo(() => {
+  const renderedItems = useMemo(() => {
     const result = {};
     _.keys(items).forEach((key) => {
       const item = items[key];
@@ -198,7 +196,7 @@ const ListDropdown_: React.FCC<ListDropdownProps> = ({
   );
 };
 
-export const ListDropdown: React.FCC<ListDropdownProps> = (props) => {
+export const ListDropdown: FC<ListDropdownProps> = (props) => {
   const resources = _.map(props.resources, (resource) =>
     _.assign({ isList: true, prop: resource.kind }, resource),
   );
@@ -224,11 +222,11 @@ export const useProjectOrNamespaceModel = (): [K8sModel, boolean] | [] => {
   return [model, canCreate];
 };
 
-export const NsDropdown: React.FCC<ListDropdownProps> = (props) => {
+export const NsDropdown: FC<ListDropdownProps> = (props) => {
   const { t } = useTranslation();
   const createNamespaceModal = useCreateNamespaceModal();
   const createProjectModal = useCreateProjectModal();
-  const [selectedKey, setSelectedKey] = React.useState(props.selectedKey);
+  const [selectedKey, setSelectedKey] = useState(props.selectedKey);
   const [model, canCreate] = useProjectOrNamespaceModel();
 
   const actionItems =

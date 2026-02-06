@@ -1,7 +1,7 @@
-import * as React from 'react';
+import type { FC } from 'react';
+import { useCallback } from 'react';
 import { Title } from '@patternfly/react-core';
 import { Formik, FormikProps, FormikValues } from 'formik';
-import * as _ from 'lodash';
 import { Trans, useTranslation } from 'react-i18next';
 import { OverlayComponent } from '@console/dynamic-plugin-sdk/src/app/modal-support/OverlayProvider';
 import { useOverlay } from '@console/dynamic-plugin-sdk/src/app/modal-support/useOverlay';
@@ -11,8 +11,8 @@ import {
   ModalSubmitFooter,
   ModalWrapper,
 } from '@console/internal/components/factory/modal';
-import { PromiseComponent } from '@console/internal/components/utils';
 import { K8sKind, K8sResourceKind } from '@console/internal/module/k8s';
+import { usePromiseHandler } from '@console/shared/src/hooks/promise-handler';
 import { UNASSIGNED_KEY } from '../../const';
 import { updateResourceApplication } from '../../utils/application-utils';
 import ApplicationSelector from '../dropdowns/ApplicationSelector';
@@ -23,17 +23,12 @@ type EditApplicationFormProps = {
   cancel?: () => void;
 };
 
-type EditApplicationModalState = {
-  inProgress: boolean;
-  errorMessage: string;
-};
-
 type EditApplicationModalProps = EditApplicationFormProps & {
   resourceKind: K8sKind;
   close?: () => void;
 };
 
-const EditApplicationForm: React.FC<FormikProps<FormikValues> & EditApplicationFormProps> = ({
+const EditApplicationForm: FC<FormikProps<FormikValues> & EditApplicationFormProps> = ({
   resource,
   handleSubmit,
   isSubmitting,
@@ -43,7 +38,7 @@ const EditApplicationForm: React.FC<FormikProps<FormikValues> & EditApplicationF
   status,
 }) => {
   const { t } = useTranslation();
-  const dirty = _.get(values, 'application.selectedKey') !== initialApplication;
+  const dirty = values?.application?.selectedKey !== initialApplication;
   return (
     <form onSubmit={handleSubmit} className="modal-content">
       <ModalTitle>{t('topology~Edit application grouping')}</ModalTitle>
@@ -69,43 +64,43 @@ const EditApplicationForm: React.FC<FormikProps<FormikValues> & EditApplicationF
   );
 };
 
-class EditApplicationModal extends PromiseComponent<
-  EditApplicationModalProps,
-  EditApplicationModalState
-> {
-  private handleSubmit = (values, actions) => {
-    const { resourceKind, resource } = this.props;
-    const applicationKey = values.application.selectedKey;
-    const application = applicationKey === UNASSIGNED_KEY ? undefined : values.application.name;
+const EditApplicationModal: FC<EditApplicationModalProps> = (props) => {
+  const { resourceKind, resource, close } = props;
+  const [handlePromise] = usePromiseHandler();
 
-    return this.handlePromise(updateResourceApplication(resourceKind, resource, application))
-      .then(() => {
-        this.props.close();
-      })
-      .catch((errorMessage) => {
-        actions.setStatus({ submitError: errorMessage });
-      });
+  const handleSubmit = useCallback(
+    (values, actions) => {
+      const applicationKey = values.application.selectedKey;
+      const application = applicationKey === UNASSIGNED_KEY ? undefined : values.application.name;
+
+      return handlePromise(updateResourceApplication(resourceKind, resource, application))
+        .then(() => {
+          close();
+        })
+        .catch((errorMessage) => {
+          actions.setStatus({ submitError: errorMessage });
+        });
+    },
+    [resourceKind, resource, handlePromise, close],
+  );
+
+  const application = resource?.metadata?.labels?.['app.kubernetes.io/part-of'];
+
+  const initialValues = {
+    application: {
+      name: application,
+      selectedKey: application || UNASSIGNED_KEY,
+    },
   };
 
-  render() {
-    const { resource } = this.props;
-    const application = _.get(resource, ['metadata', 'labels', 'app.kubernetes.io/part-of']);
-
-    const initialValues = {
-      application: {
-        name: application,
-        selectedKey: application || UNASSIGNED_KEY,
-      },
-    };
-    return (
-      <Formik initialValues={initialValues} onSubmit={this.handleSubmit}>
-        {(formikProps) => (
-          <EditApplicationForm {...formikProps} {...this.props} initialApplication={application} />
-        )}
-      </Formik>
-    );
-  }
-}
+  return (
+    <Formik initialValues={initialValues} onSubmit={handleSubmit}>
+      {(formikProps) => (
+        <EditApplicationForm {...formikProps} {...props} initialApplication={application} />
+      )}
+    </Formik>
+  );
+};
 
 const EditApplicationModalProvider: OverlayComponent<EditApplicationModalProps> = (props) => {
   return (
@@ -117,7 +112,7 @@ const EditApplicationModalProvider: OverlayComponent<EditApplicationModalProps> 
 
 export const useEditApplicationModalLauncher = (props) => {
   const launcher = useOverlay();
-  return React.useCallback(
+  return useCallback(
     () => launcher<EditApplicationModalProps>(EditApplicationModalProvider, props),
     [launcher, props],
   );

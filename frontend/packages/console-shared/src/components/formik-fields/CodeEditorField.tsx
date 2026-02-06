@@ -1,8 +1,8 @@
-import * as React from 'react';
+import type { FC } from 'react';
+import { useRef, useState, useCallback } from 'react';
 import { css } from '@patternfly/react-styles';
 import { FormikValues, useField, useFormikContext } from 'formik';
 import { isEmpty } from 'lodash';
-import { useTranslation } from 'react-i18next';
 import {
   useResolvedExtensions,
   isYAMLTemplate,
@@ -15,7 +15,7 @@ import { ConsoleYAMLSampleModel } from '@console/internal/models';
 import { getYAMLTemplates } from '@console/internal/models/yaml-templates';
 import { definitionFor, K8sResourceCommon, referenceForModel } from '@console/internal/module/k8s';
 import { ToggleSidebarButton } from '@console/shared/src/components/editor/ToggleSidebarButton';
-import { getResourceSidebarSamples } from '../../utils';
+import { useResourceSidebarSamples } from '@console/shared/src/hooks/useResourceSidebarSamples';
 import { CodeEditorFieldProps } from './field-types';
 
 import './CodeEditorField.scss';
@@ -25,7 +25,7 @@ const SampleResource: WatchK8sResource = {
   isList: true,
 };
 
-const CodeEditorField: React.FC<CodeEditorFieldProps> = ({
+const CodeEditorField: FC<CodeEditorFieldProps> = ({
   name,
   label,
   model,
@@ -39,26 +39,19 @@ const CodeEditorField: React.FC<CodeEditorFieldProps> = ({
 }) => {
   const [field] = useField(name);
   const { setFieldValue } = useFormikContext<FormikValues>();
-  const { t } = useTranslation();
-  const editorRef = React.useRef();
+  const editorRef = useRef();
 
-  const [sidebarOpen, setSidebarOpen] = React.useState<boolean>(true);
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
 
   const [sampleResources, loaded, loadError] = useK8sWatchResource<K8sResourceCommon[]>(
     SampleResource,
   );
 
-  const { samples, snippets } = model
-    ? getResourceSidebarSamples(
-        model,
-        {
-          data: sampleResources,
-          loaded,
-          loadError,
-        },
-        t,
-      )
-    : { samples: [], snippets: [] };
+  const { samples, snippets } = useResourceSidebarSamples(model, {
+    data: sampleResources,
+    loaded,
+    loadError,
+  });
 
   const definition = model ? definitionFor(model) : { properties: [] };
   const hasSchema = !!schema || (!!definition && !isEmpty(definition.properties));
@@ -66,7 +59,7 @@ const CodeEditorField: React.FC<CodeEditorFieldProps> = ({
 
   const [templateExtensions] = useResolvedExtensions<YAMLTemplate>(isYAMLTemplate);
 
-  const sanitizeYamlContent = React.useCallback(
+  const sanitizeYamlContent = useCallback(
     (id: string = 'default', yaml: string = '', kind: string) => {
       if (yaml) {
         return yaml;
@@ -88,7 +81,11 @@ const CodeEditorField: React.FC<CodeEditorFieldProps> = ({
       >
         <div className="osc-yaml-editor__editor">
           <AsyncComponent
-            loader={() => import('../editor/CodeEditor').then((c) => c.default)}
+            loader={() =>
+              import('../editor/CodeEditor' /* webpackChunkName: "code-editor" */).then(
+                (c) => c.CodeEditor,
+              )
+            }
             forwardRef={editorRef}
             value={field.value}
             minHeight={minHeight ?? '200px'}
@@ -114,7 +111,11 @@ const CodeEditorField: React.FC<CodeEditorFieldProps> = ({
       </div>
       {sidebarOpen && hasSidebarContent && (
         <AsyncComponent
-          loader={() => import('../editor/CodeEditorSidebar').then((c) => c.default)}
+          loader={() =>
+            import(
+              '../editor/CodeEditorSidebar' /* webpackChunkName: "code-editor-sidebar" */
+            ).then((c) => c.CodeEditorSidebar)
+          }
           editorRef={editorRef}
           model={model}
           schema={schema}

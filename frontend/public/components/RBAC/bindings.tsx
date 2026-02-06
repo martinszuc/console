@@ -1,5 +1,6 @@
-import * as _ from 'lodash-es';
-import * as React from 'react';
+import type { FC } from 'react';
+import * as _ from 'lodash';
+import { useMemo, useCallback, useState, useEffect, Suspense } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom-v5-compat';
 import { useTranslation } from 'react-i18next';
 import i18next from 'i18next';
@@ -98,7 +99,7 @@ const tableColumnInfo = [
 
 const useRoleBindingsColumns = (): TableColumn<BindingKind>[] => {
   const { t } = useTranslation();
-  return React.useMemo(
+  return useMemo(
     () => [
       {
         title: t('public~Name'),
@@ -153,7 +154,7 @@ const useRoleBindingsColumns = (): TableColumn<BindingKind>[] => {
   );
 };
 
-export const BindingName: React.FCC<BindingProps> = ({ binding }) => (
+export const BindingName: FC<BindingProps> = ({ binding }) => (
   <ResourceLink
     kind={binding.kind}
     name={binding.metadata.name}
@@ -161,7 +162,7 @@ export const BindingName: React.FCC<BindingProps> = ({ binding }) => (
   />
 );
 
-export const BindingKebab: React.FCC<BindingProps> = ({ binding }) => {
+export const BindingKebab: FC<BindingProps> = ({ binding }) => {
   const context = {
     [referenceFor(binding)]: binding,
   };
@@ -172,7 +173,7 @@ export const BindingKebab: React.FCC<BindingProps> = ({ binding }) => {
   ) : null;
 };
 
-export const RoleLink: React.FCC<BindingProps> = ({ binding }) => {
+export const RoleLink: FC<BindingProps> = ({ binding }) => {
   const kind = binding.roleRef.kind;
 
   // Cluster Roles have no namespace and for Roles, the Role's namespace matches the Role Binding's namespace
@@ -190,7 +191,7 @@ const bindingType = (binding: BindingKind) => {
   return binding.metadata.namespace ? 'namespace' : 'cluster';
 };
 
-const getDataViewRows: GetDataViewRows<BindingKind, undefined> = (data, columns) => {
+const getDataViewRows: GetDataViewRows<BindingKind> = (data, columns) => {
   return data.map(({ obj: binding }) => {
     const rowCells = {
       [tableColumnInfo[0].id]: {
@@ -231,13 +232,13 @@ const getDataViewRows: GetDataViewRows<BindingKind, undefined> = (data, columns)
   });
 };
 
-export const BindingsList: React.FCC<BindingsListTableProps> = (props) => {
+export const BindingsList: FC<BindingsListTableProps> = (props) => {
   const { t } = useTranslation();
   const columns = useRoleBindingsColumns();
 
   const hasCRBindings = props.data.some((binding) => !binding.metadata.namespace);
 
-  const kindFilterOptions = React.useMemo(() => {
+  const kindFilterOptions = useMemo(() => {
     const options = hasCRBindings
       ? [
           {
@@ -266,7 +267,9 @@ export const BindingsList: React.FCC<BindingsListTableProps> = (props) => {
     return options;
   }, [hasCRBindings, t]);
 
-  const additionalFilterNodes = React.useMemo<React.ReactNode[]>(
+  const initialFilters = useMemo(() => ({ ...initialFiltersDefault, 'role-kind': [] }), []);
+
+  const additionalFilterNodes = useMemo<React.ReactNode[]>(
     () => [
       <DataViewCheckboxFilter
         key="role-kind"
@@ -279,7 +282,7 @@ export const BindingsList: React.FCC<BindingsListTableProps> = (props) => {
     [kindFilterOptions, t],
   );
 
-  const matchesAdditionalFilters = React.useCallback(
+  const matchesAdditionalFilters = useCallback(
     (binding: BindingKind, filters: BindingFilters) =>
       !filters['role-kind'] ||
       filters['role-kind'].length === 0 ||
@@ -290,15 +293,18 @@ export const BindingsList: React.FCC<BindingsListTableProps> = (props) => {
   const { data, loaded, staticFilters } = props;
 
   // Apply staticFilters to filter the data using table filters
-  const filteredData = React.useMemo(() => {
+  const filteredData = useMemo(() => {
     if (!staticFilters || !data) {
       return data;
     }
 
     const filtersMap = tableFilters(false); // false for fuzzy search
 
+    // Convert staticFilters to array format if it's an object
+    const filtersArray = Array.isArray(staticFilters) ? staticFilters : [staticFilters];
+
     return data.filter((binding) => {
-      return staticFilters.every((filter) => {
+      return filtersArray.every((filter) => {
         const filterKey = Object.keys(filter)[0];
         const filterValue = filter[filterKey];
 
@@ -311,24 +317,24 @@ export const BindingsList: React.FCC<BindingsListTableProps> = (props) => {
   }, [data, staticFilters]);
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView<BindingKind, undefined, BindingFilters>
         {...props}
         data={filteredData}
         loaded={loaded}
         label={t('public~RoleBindings')}
         columns={columns}
-        initialFilters={{ ...initialFiltersDefault, 'role-kind': [] }}
+        initialFilters={initialFilters}
         additionalFilterNodes={additionalFilterNodes}
         matchesAdditionalFilters={matchesAdditionalFilters}
         getDataViewRows={getDataViewRows}
         hideColumnManagement={true}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 
-export const RoleBindingsPage: React.FCC<RoleBindingsPageProps> = ({
+export const RoleBindingsPage: FC<RoleBindingsPageProps> = ({
   namespace = undefined,
   showTitle = true,
   mock = false,
@@ -354,7 +360,7 @@ export const RoleBindingsPage: React.FCC<RoleBindingsPageProps> = ({
     },
   });
 
-  const data = React.useMemo(() => flatten(resources), [resources]);
+  const data = useMemo(() => flatten(resources), [resources]);
 
   const loaded = Object.values(resources)
     .filter((r) => !r.loadError)
@@ -379,7 +385,7 @@ export const RoleBindingsPage: React.FCC<RoleBindingsPageProps> = ({
   );
 };
 
-const NsRoleDropdown: React.FCC<RoleDropdownProps> = (props) => {
+const NsRoleDropdown: FC<RoleDropdownProps> = (props) => {
   const openshiftFlag = useFlag(FLAGS.OPENSHIFT);
   const { t } = useTranslation();
 
@@ -408,7 +414,7 @@ const NsRoleDropdown: React.FCC<RoleDropdownProps> = (props) => {
   );
 };
 
-const ClusterRoleDropdown: React.FCC<RoleDropdownProps> = (props) => {
+const ClusterRoleDropdown: FC<RoleDropdownProps> = (props) => {
   const { t } = useTranslation();
   return (
     <ListDropdown
@@ -420,15 +426,15 @@ const ClusterRoleDropdown: React.FCC<RoleDropdownProps> = (props) => {
   );
 };
 
-const BaseEditRoleBinding: React.FCC<BaseEditRoleBindingProps> = (props) => {
+const BaseEditRoleBinding: FC<BaseEditRoleBindingProps> = (props) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
 
   const { fixed, saveButtonText } = props;
 
-  const [data, setData] = React.useState({} as any);
-  const [inProgress, setInProgress] = React.useState(false);
-  const [error, setError] = React.useState('');
+  const [data, setData] = useState({} as any);
+  const [inProgress, setInProgress] = useState(false);
+  const [error, setError] = useState('');
 
   const subjectIndex = props.subjectIndex || 0;
 
@@ -440,7 +446,7 @@ const BaseEditRoleBinding: React.FCC<BaseEditRoleBindingProps> = (props) => {
   const { subjectKind, subjectName } = fixed.subjectRef || {};
 
   // constructor/didmount
-  React.useEffect(() => {
+  useEffect(() => {
     const obj = _.defaultsDeep({}, _.omit(fixed, 'subjectRef'), existingData, {
       apiVersion: 'rbac.authorization.k8s.io/v1',
       kind: 'RoleBinding',
@@ -566,7 +572,7 @@ const BaseEditRoleBinding: React.FCC<BaseEditRoleBindingProps> = (props) => {
     );
   };
 
-  const RoleDropdown: React.FCC<RoleDropdownProps> =
+  const RoleDropdown: FC<RoleDropdownProps> =
     data.kind === 'RoleBinding' ? NsRoleDropdown : ClusterRoleDropdown;
 
   const title = `${props.titleVerbAndKind}`;
@@ -739,7 +745,7 @@ const BaseEditRoleBinding: React.FCC<BaseEditRoleBindingProps> = (props) => {
   );
 };
 
-export const CreateRoleBinding: React.FCC = () => {
+export const CreateRoleBinding: FC = () => {
   const params = useParams();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
@@ -777,7 +783,7 @@ const getSubjectIndex = () => {
   return parseInt(subjectIndex, 10);
 };
 
-const BindingLoadingWrapper: React.FCC<BindingLoadingWrapperProps> = (props) => {
+const BindingLoadingWrapper: FC<BindingLoadingWrapperProps> = (props) => {
   const [, setActiveNamespace] = useActiveNamespace();
   const fixed: { [key: string]: any } = {};
   _.each(props.fixedKeys, (k) => (fixed[k] = _.get(props.obj.data, k)));
@@ -793,7 +799,7 @@ const BindingLoadingWrapper: React.FCC<BindingLoadingWrapperProps> = (props) => 
   );
 };
 
-export const EditRoleBinding: React.FCC<EditRoleBindingProps> = ({ kind }) => {
+export const EditRoleBinding: FC<EditRoleBindingProps> = ({ kind }) => {
   const { t } = useTranslation();
   const params = useParams();
   return (
@@ -810,7 +816,7 @@ export const EditRoleBinding: React.FCC<EditRoleBindingProps> = ({ kind }) => {
   );
 };
 
-export const CopyRoleBinding: React.FCC<EditRoleBindingProps> = ({ kind }) => {
+export const CopyRoleBinding: FC<EditRoleBindingProps> = ({ kind }) => {
   const { t } = useTranslation();
   const params = useParams();
   return (

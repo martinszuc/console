@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { FC } from 'react';
 import { screen } from '@testing-library/react';
 import { renderWithProviders } from '../../../test-utils/unit-test-utils';
 import ProgressiveListItem from '../ProgressiveListItem';
@@ -6,7 +6,7 @@ import ProgressiveListItem from '../ProgressiveListItem';
 // Mock scrollIntoView
 Element.prototype.scrollIntoView = jest.fn();
 
-const DummyComponent: React.FCC = () => <div>Dummy Component</div>;
+const DummyComponent: FC = () => <div>Dummy Component</div>;
 
 describe('ProgressiveListItem', () => {
   it('should render the child component correctly', () => {

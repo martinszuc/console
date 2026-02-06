@@ -1,5 +1,6 @@
-import * as React from 'react';
-import * as _ from 'lodash-es';
+import type { FC } from 'react';
+import { useState } from 'react';
+import * as _ from 'lodash';
 import { useTranslation } from 'react-i18next';
 
 import { createModalLauncher, ModalTitle, ModalBody, ModalSubmitFooter } from '../factory/modal';
@@ -23,14 +24,14 @@ const updateAlertRoutingProperty = (
   }
 };
 
-export const AlertRoutingModal: React.FC<AlertRoutingModalProps> = ({
+export const AlertRoutingModal: FC<AlertRoutingModalProps> = ({
   config,
   secret,
   cancel,
   close,
 }) => {
-  const [errorMessage, setErrorMessage] = React.useState();
-  const [inProgress, setInProgress] = React.useState(false);
+  const [errorMessage, setErrorMessage] = useState();
+  const [inProgress, setInProgress] = useState(false);
   const { t } = useTranslation();
 
   const submit = (event): void => {

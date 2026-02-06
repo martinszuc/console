@@ -1,5 +1,6 @@
-import * as React from 'react';
-import * as _ from 'lodash-es';
+import type { FC } from 'react';
+import { useState } from 'react';
+import * as _ from 'lodash';
 import { DocumentTitle } from '@console/shared/src/components/document-title/DocumentTitle';
 import { PageHeading } from '@console/shared/src/components/heading/PageHeading';
 import { useTranslation } from 'react-i18next';
@@ -21,15 +22,15 @@ export const DroppableFileInput = (props: any) => (
     {...props}
   />
 );
-export const AddBasicAuthPage: React.FC = () => {
+export const AddBasicAuthPage: FC = () => {
   const navigate = useNavigate();
-  const [inProgress, setInProgress] = React.useState(false);
-  const [errorMessage, setErrorMessage] = React.useState('');
-  const [name, setName] = React.useState('basic-auth');
-  const [url, setUrl] = React.useState('');
-  const [caFileContent, setCaFileContent] = React.useState('');
-  const [certFileContent, setCertFileContent] = React.useState('');
-  const [keyFileContent, setKeyFileContent] = React.useState('');
+  const [inProgress, setInProgress] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+  const [name, setName] = useState('basic-auth');
+  const [url, setUrl] = useState('');
+  const [caFileContent, setCaFileContent] = useState('');
+  const [certFileContent, setCertFileContent] = useState('');
+  const [keyFileContent, setKeyFileContent] = useState('');
 
   const { t } = useTranslation();
 
@@ -204,26 +205,24 @@ export const AddBasicAuthPage: React.FC = () => {
             value={caFileContent}
             onChange={(c: string) => setCaFileContent(c)}
           />
-          <div className="form-group">
+          <div className="pf-v6-c-form" style={{ display: 'contents' }}>
             <DroppableFileInput
               onChange={(c: string) => setCertFileContent(c)}
               inputFileData={certFileContent}
               id="cert-file-input"
               label={t('public~Certificate')}
-              hideContents
-              inputFieldHelpText={t(
+              filenamePlaceholder={t('public~PEM-encoded TLS client certificate file')}
+              textareaFieldHelpText={t(
                 'public~PEM-encoded TLS client certificate to present when connecting to the server.',
               )}
             />
-          </div>
-          <div className="form-group">
             <DroppableFileInput
               onChange={(c: string) => setKeyFileContent(c)}
               inputFileData={keyFileContent}
               id="key-file-input"
               label={t('public~Key')}
-              hideContents
-              inputFieldHelpText={t(
+              filenamePlaceholder={t('public~PEM-encoded TLS private key file')}
+              textareaFieldHelpText={t(
                 'public~PEM-encoded TLS private key for the client certificate. Required if certificate is specified.',
               )}
             />

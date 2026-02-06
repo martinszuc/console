@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { FC } from 'react';
 import { useLocation } from 'react-router';
 import { DocumentTitle } from '@console/shared/src/components/document-title/DocumentTitle';
 import { ButtonLink } from '@console/shared/src/components/links/ButtonLink';
@@ -11,7 +11,7 @@ import { Trans, useTranslation } from 'react-i18next';
 import { CodeBlock, CodeBlockCode, Stack, StackItem } from '@patternfly/react-core';
 import { useFavoritesOptions } from './useFavoritesOptions';
 
-export const ErrorPage404: React.FC<PfErrorStateProps> = (props) => {
+export const ErrorPage404: FC<PfErrorStateProps> = (props) => {
   const { t } = useTranslation();
   const location = useLocation();
 
@@ -63,7 +63,7 @@ const ErrorStateMessage = () => (
   </Trans>
 );
 
-export const ErrorState: React.FC = () => {
+export const ErrorState: FC = () => {
   const { t } = useTranslation();
 
   return (
@@ -84,7 +84,7 @@ export const ErrorState: React.FC = () => {
   );
 };
 
-const LoginErrorMessage: React.FC = () => {
+const LoginErrorMessage: FC = () => {
   const { t } = useTranslation();
   const location = useLocation();
   const urlSearchParams = new URLSearchParams(location.search);
@@ -92,28 +92,34 @@ const LoginErrorMessage: React.FC = () => {
   const error = urlSearchParams.get('error');
   switch (errorType) {
     case 'oauth_error':
-      return t('public~There was an error generating OAuth client from OIDC client.');
+      return <>{t('public~There was an error generating OAuth client from OIDC client.')}</>;
     case 'login_state_error':
-      return t('public~There was an error generating login state.');
+      return <>{t('public~There was an error generating login state.')}</>;
     case 'cookie_error':
-      return t('public~There was an error setting login state cookie.');
+      return <>{t('public~There was an error setting login state cookie.')}</>;
     case 'logout_error':
-      return t('public~There was an error logging you out. Please try again.');
+      return <>{t('public~There was an error logging you out. Please try again.')}</>;
     case 'auth':
       // When the error type is set as auth
       switch (error) {
         case 'missing_state':
-          return t('public~There was an error parsing your state cookie.');
+          return <>{t('public~There was an error parsing your state cookie.')}</>;
         case 'invalid_state':
-          return t(
-            'public~There was an error verifying your session. Please log out and try again.',
+          return (
+            <>
+              {t('public~There was an error verifying your session. Please log out and try again.')}
+            </>
           );
         case 'missing_code':
-          return t('public~Auth code is missing in query param.');
+          return <>{t('public~Auth code is missing in query param.')}</>;
         case 'invalid_code':
-          return t('public~There was an error logging you in. Please log out and try again.');
+          return (
+            <>{t('public~There was an error logging you in. Please log out and try again.')}</>
+          );
         default:
-          return t('public~There was an authentication error. Please log out and try again.');
+          return (
+            <>{t('public~There was an authentication error. Please log out and try again.')}</>
+          );
       }
     default:
       return (
@@ -127,7 +133,7 @@ const LoginErrorMessage: React.FC = () => {
   }
 };
 
-export const AuthenticationErrorPage: React.FC = () => {
+export const AuthenticationErrorPage: FC = () => {
   const { t } = useTranslation();
   const title = t('public~Authentication error');
 

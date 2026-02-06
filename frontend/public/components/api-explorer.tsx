@@ -1,5 +1,4 @@
 import { FC, MouseEvent, useEffect, useMemo, useRef, FormEvent, useState } from 'react';
-import { withRouter } from 'react-router-dom';
 import {
   useLocation,
   useParams,
@@ -8,8 +7,8 @@ import {
   useNavigate,
 } from 'react-router-dom-v5-compat';
 import { connect } from 'react-redux';
-import { compose } from 'redux';
-import * as _ from 'lodash-es';
+import { useConsoleSelector } from '@console/shared/src/hooks/useConsoleSelector';
+import * as _ from 'lodash';
 import { DocumentTitle } from '@console/shared/src/components/document-title/DocumentTitle';
 import { Map as ImmutableMap } from 'immutable';
 import * as fuzzy from 'fuzzysearch';
@@ -136,10 +135,6 @@ const Group: FC<{ value: string }> = ({ value }) => {
     </span>
   );
 };
-const stateToProps = ({ k8s }) => ({
-  models: k8s.getIn(['RESOURCES', 'models']),
-});
-
 const BodyEmpty: FC<{ label: string; colSpan: number }> = ({ label, colSpan }) => {
   const { t } = useTranslation();
   return (
@@ -155,10 +150,11 @@ const BodyEmpty: FC<{ label: string; colSpan: number }> = ({ label, colSpan }) =
   );
 };
 
-const APIResourcesList = compose(
-  withRouter,
-  connect<APIResourcesListPropsFromState>(stateToProps),
-)(({ models, location }) => {
+const APIResourcesList: FC = () => {
+  const location = useLocation();
+  const models: ImmutableMap<K8sResourceKindReference, K8sKind> = useConsoleSelector((state) =>
+    state.k8s.getIn(['RESOURCES', 'models']),
+  );
   const ALL = '#all#';
   const GROUP_PARAM = 'g';
   const VERSION_PARAM = 'v';
@@ -437,7 +433,11 @@ const APIResourcesList = compose(
             />
           </ToolbarItem>
           <ToolbarItem variant="pagination">
-            <Pagination itemCount={sortedResources.length} {...pagination} />
+            <Pagination
+              itemCount={sortedResources.length}
+              titles={{ ofWord: t('public~of') }}
+              {...pagination}
+            />
           </ToolbarItem>
         </ToolbarContent>
       </Toolbar>
@@ -516,7 +516,7 @@ const APIResourcesList = compose(
       </DataView>
     </PaneBody>
   );
-});
+};
 APIResourcesList.displayName = 'APIResourcesList';
 
 export const APIExplorerPage: FC<{}> = () => {
@@ -837,7 +837,11 @@ const APIResourceAccessReview: FC<APIResourceTabProps> = ({
             />
           </FlexItem>
           <FlexItem align={{ default: 'alignRight' }}>
-            <Pagination itemCount={filteredData.length} {...pagination} />
+            <Pagination
+              itemCount={filteredData.length}
+              titles={{ ofWord: t('public~of') }}
+              {...pagination}
+            />
           </FlexItem>
         </Flex>
         <RowFilter
@@ -1038,10 +1042,6 @@ export const APIResourcePage = connect(k8StateToProps)(
 
 type APIResourceLinkStateProps = {
   activeNamespace: string;
-};
-
-type APIResourcesListPropsFromState = {
-  models: ImmutableMap<K8sResourceKindReference, K8sKind>;
 };
 
 type APIResourceLinkOwnProps = {

@@ -1,8 +1,8 @@
+import { renderHook } from '@testing-library/react';
 import * as _ from 'lodash';
 import { DeploymentConfigModel, PodModel } from '@console/internal/models';
 import { K8sResourceKind } from '@console/internal/module/k8s';
 import { RevisionModel } from '@console/knative-plugin';
-import { testHook } from '@console/shared/src/test-utils/hooks-utils';
 import { t } from '../../../../../__mocks__/i18next';
 import { ExtPodKind } from '../../types';
 import {
@@ -14,6 +14,13 @@ import {
 } from '../__mocks__/pod-utils-test-data';
 import { usePodScalingAccessStatus, podRingLabel, getFailedPods } from '../pod-ring-utils';
 import * as utils from '../pod-utils';
+
+jest.mock('../pod-utils', () => ({
+  ...jest.requireActual('../pod-utils'),
+  checkPodEditAccess: jest.fn(),
+}));
+
+const checkPodEditAccessMock = utils.checkPodEditAccess as jest.Mock;
 
 describe('pod-ring utils:', () => {
   it('should return proper title, subtitle for podRingLabel', () => {
@@ -169,9 +176,9 @@ describe('usePodScalingAccessStatus', () => {
   let obj: K8sResourceKind;
 
   beforeEach(() => {
-    jest
-      .spyOn(utils, 'checkPodEditAccess')
-      .mockImplementation(() => Promise.resolve({ status: { allowed: false } }));
+    checkPodEditAccessMock.mockImplementation(() =>
+      Promise.resolve({ status: { allowed: false } }),
+    );
     obj = {
       kind: '',
       metadata: {},
@@ -180,46 +187,44 @@ describe('usePodScalingAccessStatus', () => {
     };
   });
 
-  it('should return false for scaling when enableScaling is false', (done) => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('should return false for scaling when enableScaling is false', () => {
     obj.kind = 'Deployment';
-    testHook(() => {
-      expect(usePodScalingAccessStatus(obj, DeploymentConfigModel, [], false)).toBe(false);
-      done();
-    });
+    const { result } = renderHook(() =>
+      usePodScalingAccessStatus(obj, DeploymentConfigModel, [], false),
+    );
+    expect(result.current).toBe(false);
   });
 
-  it('should return false for knative revisions', (done) => {
+  it('should return false for knative revisions', () => {
     obj.kind = 'Revision';
-    testHook(() => {
-      expect(usePodScalingAccessStatus(obj, RevisionModel, [], true)).toBe(false);
-      done();
-    });
+    const { result } = renderHook(() => usePodScalingAccessStatus(obj, RevisionModel, [], true));
+    expect(result.current).toBe(false);
   });
 
-  it('should return false for pods', (done) => {
+  it('should return false for pods', () => {
     obj.kind = 'Pod';
-    testHook(() => {
-      expect(usePodScalingAccessStatus(obj, PodModel, [], true)).toBe(false);
-      done();
-    });
+    const { result } = renderHook(() => usePodScalingAccessStatus(obj, PodModel, [], true));
+    expect(result.current).toBe(false);
   });
 
-  it('should return false when api call returns false for a resource', (done) => {
+  it('should return false when api call returns false for a resource', () => {
     obj.kind = 'DeploymentConfig';
-    testHook(() => {
-      expect(usePodScalingAccessStatus(obj, DeploymentConfigModel, [], true)).toBe(false);
-      done();
-    });
+    const { result } = renderHook(() =>
+      usePodScalingAccessStatus(obj, DeploymentConfigModel, [], true),
+    );
+    expect(result.current).toBe(false);
   });
 
-  it('should return false when API call results in an error', (done) => {
-    jest
-      .spyOn(utils, 'checkPodEditAccess')
-      .mockImplementation(() => Promise.reject(new Error('error')));
-    testHook(() => {
-      expect(usePodScalingAccessStatus(obj, DeploymentConfigModel, [], true)).toBe(false);
-      done();
-    });
+  it('should return false when API call results in an error', () => {
+    checkPodEditAccessMock.mockImplementation(() => Promise.reject(new Error('error')));
+    const { result } = renderHook(() =>
+      usePodScalingAccessStatus(obj, DeploymentConfigModel, [], true),
+    );
+    expect(result.current).toBe(false);
   });
 });
 

@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC } from 'react';
+import { useCallback } from 'react';
 import { TextInputTypes } from '@patternfly/react-core';
 import { useFormikContext, FormikValues, useField } from 'formik';
 import * as _ from 'lodash';
@@ -11,7 +12,7 @@ import './NamespaceSection.scss';
 
 type NamespaceSectionProps = WithFlagsProps;
 
-const NamespaceSection: React.FCC<NamespaceSectionProps> = ({ flags }) => {
+const NamespaceSection: FC<NamespaceSectionProps> = ({ flags }) => {
   const canCreateNs = flags[FLAGS.CAN_CREATE_NS];
   const canCreateProject = flags[FLAGS.CAN_CREATE_PROJECT];
   const canCreate = canCreateNs || canCreateProject;
@@ -21,7 +22,7 @@ const NamespaceSection: React.FCC<NamespaceSectionProps> = ({ flags }) => {
 
   useFormikValidationFix(namespace.value);
 
-  const onDropdownChange = React.useCallback(
+  const onDropdownChange = useCallback(
     (key: string) => {
       setFieldTouched('namespace', true);
       setFieldValue('namespace', key);

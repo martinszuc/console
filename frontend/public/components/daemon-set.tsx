@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC } from 'react';
+import { Suspense } from 'react';
 import ActionServiceProvider from '@console/shared/src/components/actions/ActionServiceProvider';
 import ActionMenu from '@console/shared/src/components/actions/menu/ActionMenu';
 import { ActionMenuVariant } from '@console/shared/src/components/actions/types';
@@ -6,10 +7,7 @@ import PaneBody from '@console/shared/src/components/layout/PaneBody';
 import PodRing from '@console/shared/src/components/pod/PodRing';
 import { usePodsWatcher } from '@console/shared/src/hooks/usePodsWatcher';
 import { usePrometheusGate } from '@console/shared/src/hooks/usePrometheusGate';
-import {
-  initialFiltersDefault,
-  ConsoleDataView,
-} from '@console/app/src/components/data-view/ConsoleDataView';
+import { ConsoleDataView } from '@console/app/src/components/data-view/ConsoleDataView';
 import { useWorkloadColumns, getWorkloadDataViewRows } from './workload-table';
 import { GetDataViewRows } from '@console/app/src/components/data-view/types';
 import { useTranslation } from 'react-i18next';
@@ -32,11 +30,11 @@ import { VolumesTable } from './volumes-table';
 
 const kind = referenceForModel(DaemonSetModel);
 
-const getDataViewRows: GetDataViewRows<DaemonSetKind, undefined> = (data, columns) => {
+const getDataViewRows: GetDataViewRows<DaemonSetKind> = (data, columns) => {
   return getWorkloadDataViewRows(data, columns, DaemonSetModel);
 };
 
-export const DaemonSetDetailsList: React.FCC<DaemonSetDetailsListProps> = ({ ds }) => {
+export const DaemonSetDetailsList: FC<DaemonSetDetailsListProps> = ({ ds }) => {
   const { t } = useTranslation();
   return (
     <DescriptionList>
@@ -55,7 +53,7 @@ export const DaemonSetDetailsList: React.FCC<DaemonSetDetailsListProps> = ({ ds 
   );
 };
 
-const DaemonSetDetails: React.FCC<DaemonSetDetailsProps> = ({ obj: daemonset }) => {
+const DaemonSetDetails: FC<DaemonSetDetailsProps> = ({ obj: daemonset }) => {
   const { t } = useTranslation();
   const { podData, loaded } = usePodsWatcher(daemonset);
   return (
@@ -98,15 +96,15 @@ const DaemonSetDetails: React.FCC<DaemonSetDetailsProps> = ({ obj: daemonset }) 
   );
 };
 
-const EnvironmentPage: React.FCC<EnvironmentPageProps> = (props) => (
+const EnvironmentPage: FC<EnvironmentPageProps> = (props) => (
   <AsyncComponent
-    loader={() => import('./environment.jsx').then((c) => c.EnvironmentPage)}
+    loader={() => import('./environment').then((c) => c.EnvironmentPage)}
     {...props}
   />
 );
 
 const envPath = ['spec', 'template', 'spec', 'containers'];
-const EnvironmentTab: React.FCC<EnvironmentTabProps> = (props) => (
+const EnvironmentTab: FC<EnvironmentTabProps> = (props) => (
   <EnvironmentPage
     obj={props.obj}
     rawEnvData={props.obj.spec.template.spec}
@@ -115,26 +113,25 @@ const EnvironmentTab: React.FCC<EnvironmentTabProps> = (props) => (
   />
 );
 
-export const DaemonSetsList: React.FCC<DaemonSetsListProps> = ({ data, loaded, ...props }) => {
+export const DaemonSetsList: FC<DaemonSetsListProps> = ({ data, loaded, ...props }) => {
   const columns = useWorkloadColumns<DaemonSetKind>();
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView<DaemonSetKind>
         {...props}
         label={DaemonSetModel.labelPlural}
         data={data}
         loaded={loaded}
         columns={columns}
-        initialFilters={initialFiltersDefault}
         getDataViewRows={getDataViewRows}
         hideColumnManagement={true}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 
-export const DaemonSetsPage: React.FCC<DaemonSetsPageProps> = (props) => (
+export const DaemonSetsPage: FC<DaemonSetsPageProps> = (props) => (
   <ListPage
     canCreate={true}
     ListComponent={DaemonSetsList}
@@ -144,11 +141,9 @@ export const DaemonSetsPage: React.FCC<DaemonSetsPageProps> = (props) => (
   />
 );
 
-const DaemonSetPods: React.FCC<DaemonSetPodsProps> = (props) => (
-  <PodsComponent {...props} showNodes />
-);
+const DaemonSetPods: FC<DaemonSetPodsProps> = (props) => <PodsComponent {...props} showNodes />;
 
-export const DaemonSetsDetailsPage: React.FCC = (props) => {
+export const DaemonSetsDetailsPage: FC = (props) => {
   const prometheusIsAvailable = usePrometheusGate();
   const customActionMenu = (kindObj, obj) => {
     const resourceKind = referenceForModel(kindObj);

@@ -1,6 +1,7 @@
-import * as React from 'react';
+import type { FC } from 'react';
+import { useMemo, Fragment, Suspense } from 'react';
 import { Trans, useTranslation } from 'react-i18next';
-import * as _ from 'lodash-es';
+import * as _ from 'lodash';
 import * as semver from 'semver';
 import { Table as PfTable, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import {
@@ -28,7 +29,6 @@ import {
   actionsCellProps,
   cellIsStickyProps,
   getNameCellProps,
-  initialFiltersDefault,
   ConsoleDataView,
 } from '@console/app/src/components/data-view/ConsoleDataView';
 import { GetDataViewRows } from '@console/app/src/components/data-view/types';
@@ -100,11 +100,7 @@ export const getMostRecentBuilderTag = (imageStream: K8sResourceKind) => {
 // - It has a corresponding status tag
 export const isBuilder = (imageStream: K8sResourceKind) => !_.isEmpty(getBuilderTags(imageStream));
 
-const ImageStreamTagsRow: React.FCC<ImageStreamTagsRowProps> = ({
-  imageStream,
-  specTag,
-  statusTag,
-}) => {
+const ImageStreamTagsRow: FC<ImageStreamTagsRowProps> = ({ imageStream, specTag, statusTag }) => {
   const imageStreamStatus = _.get(imageStream, 'status');
   const latest = _.get(statusTag, ['items', 0]);
   const from = _.get(specTag, 'from');
@@ -166,7 +162,7 @@ const ImageStreamTagsRow: React.FCC<ImageStreamTagsRowProps> = ({
   );
 };
 
-export const ExampleDockerCommandPopover: React.FCC<ImageStreamManipulationHelpProps> = ({
+export const ExampleDockerCommandPopover: FC<ImageStreamManipulationHelpProps> = ({
   imageStream,
   tag,
 }) => {
@@ -223,7 +219,7 @@ export const ExampleDockerCommandPopover: React.FCC<ImageStreamManipulationHelpP
   );
 };
 
-export const ImageStreamsDetails: React.FCC<ImageStreamsDetailsProps> = ({ obj: imageStream }) => {
+export const ImageStreamsDetails: FC<ImageStreamsDetailsProps> = ({ obj: imageStream }) => {
   const { t } = useTranslation();
 
   const getImportErrors = (): string[] => {
@@ -255,7 +251,7 @@ export const ImageStreamsDetails: React.FCC<ImageStreamsDetailsProps> = ({ obj: 
           <ExpandableAlert
             variant={AlertVariant.warning}
             alerts={_.map(importErrors, (error, i) => (
-              <React.Fragment key={i}>{error}</React.Fragment>
+              <Fragment key={i}>{error}</Fragment>
             ))}
           />
         )}
@@ -317,7 +313,7 @@ export const ImageStreamsDetails: React.FCC<ImageStreamsDetailsProps> = ({ obj: 
   );
 };
 
-const ImageStreamHistory: React.FCC<ImageStreamHistoryProps> = ({ obj: imageStream }) => {
+const ImageStreamHistory: FC<ImageStreamHistoryProps> = ({ obj: imageStream }) => {
   const imageStreamStatusTags = _.get(imageStream, 'status.tags');
   return (
     <ImageStreamTimeline
@@ -334,7 +330,7 @@ const pages = [
   navFactory.editYaml(),
   navFactory.history(ImageStreamHistory),
 ];
-export const ImageStreamsDetailsPage: React.FCC = (props) => (
+export const ImageStreamsDetailsPage: FC = (props) => (
   <DetailsPage {...props} kind={referenceForModel(ImageStreamModel)} pages={pages} />
 );
 ImageStreamsDetailsPage.displayName = 'ImageStreamsDetailsPage';
@@ -347,7 +343,7 @@ const tableColumnInfo = [
   { id: 'actions' },
 ];
 
-const getDataViewRows: GetDataViewRows<K8sResourceKind, undefined> = (data, columns) => {
+const getDataViewRows: GetDataViewRows<K8sResourceKind> = (data, columns) => {
   return data.map(({ obj: imageStream }) => {
     const { name, namespace, labels, creationTimestamp } = imageStream.metadata;
 
@@ -384,7 +380,7 @@ const getDataViewRows: GetDataViewRows<K8sResourceKind, undefined> = (data, colu
 
 const useImageStreamColumns = (): TableColumn<K8sResourceKind>[] => {
   const { t } = useTranslation();
-  const columns: TableColumn<K8sResourceKind>[] = React.useMemo(() => {
+  const columns: TableColumn<K8sResourceKind>[] = useMemo(() => {
     return [
       {
         title: t('public~Name'),
@@ -432,22 +428,21 @@ const useImageStreamColumns = (): TableColumn<K8sResourceKind>[] => {
   return columns;
 };
 
-export const ImageStreamsList: React.FCC<ImageStreamsListProps> = ({ data, loaded, ...props }) => {
+export const ImageStreamsList: FC<ImageStreamsListProps> = ({ data, loaded, ...props }) => {
   const columns: TableColumn<K8sResourceKind>[] = useImageStreamColumns();
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView<K8sResourceKind>
         {...props}
         label={ImageStreamModel.labelPlural}
         data={data}
         loaded={loaded}
         columns={columns}
-        initialFilters={initialFiltersDefault}
         getDataViewRows={getDataViewRows}
         hideColumnManagement={true}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 
@@ -455,7 +450,7 @@ ImageStreamsList.displayName = 'ImageStreamsList';
 
 export const buildPhase = (build) => build.status.phase;
 
-export const ImageStreamsPage: React.FCC<ImageStreamsPageProps> = (props) => {
+export const ImageStreamsPage: FC<ImageStreamsPageProps> = (props) => {
   const { t } = useTranslation();
   return (
     <ListPage

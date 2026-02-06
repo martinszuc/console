@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { LoadingBox } from '@console/internal/components/utils/status-box';
 
@@ -6,7 +6,7 @@ type TerminalLoadingBoxProps = {
   message?: string;
 };
 
-const TerminalLoadingBox: React.FCC<TerminalLoadingBoxProps> = ({ message }) => {
+const TerminalLoadingBox: FC<TerminalLoadingBoxProps> = ({ message }) => {
   const { t } = useTranslation();
   return (
     <LoadingBox>

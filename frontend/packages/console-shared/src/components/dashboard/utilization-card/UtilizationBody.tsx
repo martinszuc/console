@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { FC } from 'react';
 import { ChartAxis, ChartContainer } from '@patternfly/react-charts/victory';
 import { Flex, FlexItem, Grid } from '@patternfly/react-core';
 import { useTranslation } from 'react-i18next';
@@ -9,7 +9,7 @@ import { useUtilizationDuration } from '../../../hooks/useUtilizationDuration';
 
 import './utilization-card.scss';
 
-const UtilizationAxis: React.FC = () => {
+const UtilizationAxis: FC = () => {
   const [containerRef, width] = useRefWidth();
   const { startDate, endDate } = useUtilizationDuration();
 
@@ -33,7 +33,7 @@ const UtilizationAxis: React.FC = () => {
   );
 };
 
-export const UtilizationBody: React.FCC<UtilizationBodyProps> = ({ children }) => {
+export const UtilizationBody: FC<UtilizationBodyProps> = ({ children }) => {
   const { t } = useTranslation();
   const axis = (
     <div className="co-utilization-card__item co-utilization-card__item-header">

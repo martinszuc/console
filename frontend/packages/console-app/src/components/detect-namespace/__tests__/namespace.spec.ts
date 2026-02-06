@@ -1,14 +1,18 @@
-import * as React from 'react';
-import { act } from 'react-dom/test-utils';
+import { useState } from 'react';
+import { act, renderHook } from '@testing-library/react';
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom-v5-compat';
 import { k8sGet } from '@console/dynamic-plugin-sdk/src/utils/k8s';
 import { ALL_NAMESPACES_KEY } from '@console/shared/src/constants';
 import { useFlag } from '@console/shared/src/hooks/flag';
-import { testHook } from '@console/shared/src/test-utils/hooks-utils';
 import { usePreferredNamespace } from '../../user-preferences/namespace/usePreferredNamespace';
 import { useValuesForNamespaceContext } from '../namespace';
 import { useLastNamespace } from '../useLastNamespace';
+
+jest.mock('react', () => ({
+  ...jest.requireActual('react'),
+  useState: jest.fn(),
+}));
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
@@ -22,7 +26,7 @@ jest.mock('react-router-dom-v5-compat', () => ({
 }));
 
 jest.mock('@console/shared/src/hooks/flag', () => ({
-  useFlag: jest.fn(),
+  useFlag: jest.fn<boolean, []>(),
 }));
 
 jest.mock('@console/dynamic-plugin-sdk/src/utils/k8s', () => ({
@@ -43,6 +47,7 @@ const useLocationMock = useLocation as jest.Mock;
 const useLastNamespaceMock = useLastNamespace as jest.Mock;
 const usePreferredNamespaceMock = usePreferredNamespace as jest.Mock;
 const k8sGetMock = k8sGet as jest.Mock;
+const useStateMock = useState as jest.Mock;
 
 const activeNamespace = 'active-ns';
 const urlNamespace: string = 'url-ns';
@@ -54,11 +59,12 @@ const preferredNamespace: string = 'preferred-ns';
 
 describe('useValuesForNamespaceContext', () => {
   beforeEach(() => {
+    useStateMock.mockImplementation(jest.requireActual('react').useState);
     useDispatchMock.mockReturnValue(jest.fn);
   });
 
   afterEach(() => {
-    jest.resetAllMocks();
+    jest.restoreAllMocks();
   });
 
   it('should return urlNamespace if it is defined', async () => {
@@ -68,7 +74,7 @@ describe('useValuesForNamespaceContext', () => {
     usePreferredNamespaceMock.mockReturnValue([preferredNamespace, jest.fn(), true]);
     useLastNamespaceMock.mockReturnValue([lastNamespace, jest.fn(), true]);
 
-    const { result, rerender } = testHook(() => useValuesForNamespaceContext());
+    const { result, rerender } = renderHook(() => useValuesForNamespaceContext());
     await act(async () => {
       rerender();
     });
@@ -82,11 +88,11 @@ describe('useValuesForNamespaceContext', () => {
     useFlagMock.mockReturnValue(true);
     k8sGetMock.mockReturnValue(Promise.resolve({}));
     useLocationMock.mockReturnValue(getLocationData(false));
-    spyOn(React, 'useState').and.returnValue([activeNamespace, jest.fn()]);
+    useStateMock.mockReturnValue([activeNamespace, jest.fn()]);
     usePreferredNamespaceMock.mockReturnValue([preferredNamespace, jest.fn(), true]);
     useLastNamespaceMock.mockReturnValue([lastNamespace, jest.fn(), true]);
 
-    const { result, rerender } = testHook(() => useValuesForNamespaceContext());
+    const { result, rerender } = renderHook(() => useValuesForNamespaceContext());
     await act(async () => {
       rerender();
     });
@@ -103,7 +109,7 @@ describe('useValuesForNamespaceContext', () => {
     usePreferredNamespaceMock.mockReturnValue([preferredNamespace, jest.fn(), true]);
     useLastNamespaceMock.mockReturnValue([lastNamespace, jest.fn(), true]);
 
-    const { result, rerender } = testHook(() => useValuesForNamespaceContext());
+    const { result, rerender } = renderHook(() => useValuesForNamespaceContext());
     await act(async () => {
       rerender();
     });
@@ -120,7 +126,7 @@ describe('useValuesForNamespaceContext', () => {
     usePreferredNamespaceMock.mockReturnValue([undefined, jest.fn(), true]);
     useLastNamespaceMock.mockReturnValue([lastNamespace, jest.fn(), true]);
 
-    const { result, rerender } = testHook(() => useValuesForNamespaceContext());
+    const { result, rerender } = renderHook(() => useValuesForNamespaceContext());
     await act(async () => {
       rerender();
     });
@@ -137,7 +143,7 @@ describe('useValuesForNamespaceContext', () => {
     usePreferredNamespaceMock.mockReturnValue([undefined, jest.fn(), true]);
     useLastNamespaceMock.mockReturnValue([undefined, jest.fn(), true]);
 
-    const { result, rerender } = testHook(() => useValuesForNamespaceContext());
+    const { result, rerender } = renderHook(() => useValuesForNamespaceContext());
     await act(async () => {
       rerender();
     });
@@ -154,7 +160,7 @@ describe('useValuesForNamespaceContext', () => {
     usePreferredNamespaceMock.mockReturnValue([preferredNamespace, jest.fn(), false]);
     useLastNamespaceMock.mockReturnValue([lastNamespace, jest.fn(), false]);
 
-    const { result, rerender } = testHook(() => useValuesForNamespaceContext());
+    const { result, rerender } = renderHook(() => useValuesForNamespaceContext());
     await act(async () => {
       rerender();
     });
@@ -171,7 +177,7 @@ describe('useValuesForNamespaceContext', () => {
     usePreferredNamespaceMock.mockReturnValue([preferredNamespace, jest.fn(), true]);
     useLastNamespaceMock.mockReturnValue([lastNamespace, jest.fn(), true]);
 
-    const { result, rerender } = testHook(() => useValuesForNamespaceContext());
+    const { result, rerender } = renderHook(() => useValuesForNamespaceContext());
     await act(async () => {
       rerender();
     });
@@ -188,7 +194,7 @@ describe('useValuesForNamespaceContext', () => {
     usePreferredNamespaceMock.mockReturnValue([undefined, jest.fn(), false]);
     useLastNamespaceMock.mockReturnValue([lastNamespace, jest.fn(), false]);
 
-    const { result, rerender } = testHook(() => useValuesForNamespaceContext());
+    const { result, rerender } = renderHook(() => useValuesForNamespaceContext());
     await act(async () => {
       rerender();
     });
@@ -205,7 +211,7 @@ describe('useValuesForNamespaceContext', () => {
     usePreferredNamespaceMock.mockReturnValue([undefined, jest.fn(), true]);
     useLastNamespaceMock.mockReturnValue([lastNamespace, jest.fn(), true]);
 
-    const { result, rerender } = testHook(() => useValuesForNamespaceContext());
+    const { result, rerender } = renderHook(() => useValuesForNamespaceContext());
     await act(async () => {
       rerender();
     });

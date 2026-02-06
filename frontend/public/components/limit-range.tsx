@@ -1,5 +1,6 @@
-import * as React from 'react';
-import * as _ from 'lodash-es';
+import type { FC } from 'react';
+import { useMemo, Suspense } from 'react';
+import * as _ from 'lodash';
 import { useTranslation } from 'react-i18next';
 import PaneBody from '@console/shared/src/components/layout/PaneBody';
 import { K8sResourceKindReference, K8sResourceKind, referenceForModel } from '../module/k8s';
@@ -16,18 +17,12 @@ import { Grid, GridItem } from '@patternfly/react-core';
 import { Table, Thead, Tbody, Tr, Th, Td } from '@patternfly/react-table';
 import {
   ConsoleDataView,
-  initialFiltersDefault,
   getNameCellProps,
   actionsCellProps,
   cellIsStickyProps,
 } from '@console/app/src/components/data-view/ConsoleDataView';
 import { TableColumn } from '@console/internal/module/k8s';
-import {
-  ConsoleDataViewColumn,
-  ConsoleDataViewRow,
-  GetDataViewRows,
-} from '@console/app/src/components/data-view/types';
-import { RowProps } from '@console/dynamic-plugin-sdk/src/extensions/console-types';
+import { GetDataViewRows } from '@console/app/src/components/data-view/types';
 import { DASH } from '@console/shared/src/constants/ui';
 import LazyActionMenu from '@console/shared/src/components/actions/LazyActionMenu';
 
@@ -35,10 +30,7 @@ const LimitRangeReference: K8sResourceKindReference = LimitRangeModel.kind;
 
 const tableColumnInfo = [{ id: 'name' }, { id: 'namespace' }, { id: 'created' }, { id: 'actions' }];
 
-const getDataViewRows: GetDataViewRows<K8sResourceKind, undefined> = (
-  data: RowProps<K8sResourceKind, undefined>[],
-  columns: ConsoleDataViewColumn<K8sResourceKind>[],
-): ConsoleDataViewRow[] => {
+const getDataViewRows: GetDataViewRows<K8sResourceKind> = (data, columns) => {
   return data.map(({ obj }) => {
     const { name, namespace, creationTimestamp } = obj.metadata;
 
@@ -73,7 +65,7 @@ const getDataViewRows: GetDataViewRows<K8sResourceKind, undefined> = (
 
 const useLimitRangeColumns = (): TableColumn<K8sResourceKind>[] => {
   const { t } = useTranslation();
-  return React.useMemo(
+  return useMemo(
     () => [
       {
         title: t('public~Name'),
@@ -112,26 +104,25 @@ const useLimitRangeColumns = (): TableColumn<K8sResourceKind>[] => {
   );
 };
 
-export const LimitRangeList: React.FC<{ data: K8sResourceKind[]; loaded: boolean }> = (props) => {
+export const LimitRangeList: FC<{ data: K8sResourceKind[]; loaded: boolean }> = (props) => {
   const { data, loaded } = props;
   const columns = useLimitRangeColumns();
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView<K8sResourceKind>
         data={data}
         loaded={loaded}
         label={LimitRangeModel.labelPlural}
         columns={columns}
-        initialFilters={initialFiltersDefault}
         getDataViewRows={getDataViewRows}
         hideColumnManagement={true}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 
-export const LimitRangeListPage: React.FC<LimitRangeListPageProps> = (props) => (
+export const LimitRangeListPage: FC<LimitRangeListPageProps> = (props) => (
   <ListPage
     {...props}
     kind={LimitRangeReference}
@@ -141,7 +132,7 @@ export const LimitRangeListPage: React.FC<LimitRangeListPageProps> = (props) => 
   />
 );
 
-export const LimitRangeDetailsRow: React.FCC<LimitRangeDetailsRowProps> = ({
+export const LimitRangeDetailsRow: FC<LimitRangeDetailsRowProps> = ({
   limitType,
   resource,
   limit,
@@ -159,7 +150,7 @@ export const LimitRangeDetailsRow: React.FCC<LimitRangeDetailsRowProps> = ({
   );
 };
 
-const LimitRangeDetailsRows: React.FCC<LimitRangeDetailsRowsProps> = ({ limit }) => {
+const LimitRangeDetailsRows: FC<LimitRangeDetailsRowsProps> = ({ limit }) => {
   const properties = ['max', 'min', 'default', 'defaultRequest', 'maxLimitRequestRatio'];
   const resources = {};
   _.each(properties, (property) => {

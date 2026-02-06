@@ -1,14 +1,15 @@
-import * as React from 'react';
-import { JSONSchema7 } from 'json-schema';
+import type { MutableRefObject, FC } from 'react';
+import { useCallback } from 'react';
+import type { JSONSchema7 } from 'json-schema';
 import { Range, Selection } from 'monaco-editor';
 import { CodeEditorRef } from '@console/dynamic-plugin-sdk';
 import { ResourceSidebar } from '@console/internal/components/sidebars/resource-sidebar';
-import { K8sKind } from '@console/internal/module/k8s';
-import { Sample } from '../../utils';
+import type { K8sKind } from '@console/internal/module/k8s';
+import type { Sample } from '@console/shared/src/hooks/useResourceSidebarSamples';
 import { downloadYaml } from './yaml-download-utils';
 
 type CodeEditorSidebarProps = {
-  editorRef: React.MutableRefObject<CodeEditorRef>;
+  editorRef: MutableRefObject<CodeEditorRef>;
   model?: K8sKind;
   samples?: Sample[];
   schema?: JSONSchema7;
@@ -18,7 +19,7 @@ type CodeEditorSidebarProps = {
   toggleSidebar: () => void;
 };
 
-const CodeEditorSidebar: React.FC<CodeEditorSidebarProps> = ({
+export const CodeEditorSidebar: FC<CodeEditorSidebarProps> = ({
   editorRef,
   model,
   samples,
@@ -30,7 +31,7 @@ const CodeEditorSidebar: React.FC<CodeEditorSidebarProps> = ({
 }) => {
   const editor = editorRef.current?.editor;
 
-  const insertYamlContent = React.useCallback(
+  const insertYamlContent = useCallback(
     (id: string = 'default', yamlContent: string = '', kind) => {
       const yaml = sanitizeYamlContent ? sanitizeYamlContent(id, yamlContent, kind) : yamlContent;
 
@@ -70,7 +71,7 @@ const CodeEditorSidebar: React.FC<CodeEditorSidebarProps> = ({
     [editor, sanitizeYamlContent],
   );
 
-  const replaceYamlContent = React.useCallback(
+  const replaceYamlContent = useCallback(
     (id: string = 'default', yamlContent: string = '', kind: string) => {
       const yaml = sanitizeYamlContent ? sanitizeYamlContent(id, yamlContent, kind) : yamlContent;
       editor?.setValue(yaml);
@@ -78,7 +79,7 @@ const CodeEditorSidebar: React.FC<CodeEditorSidebarProps> = ({
     [editor, sanitizeYamlContent],
   );
 
-  const downloadYamlContent = React.useCallback(
+  const downloadYamlContent = useCallback(
     (id: string = 'default', yamlContent: string = '', kind: string) => {
       try {
         const yaml = sanitizeYamlContent ? sanitizeYamlContent(id, yamlContent, kind) : yamlContent;
@@ -104,5 +105,3 @@ const CodeEditorSidebar: React.FC<CodeEditorSidebarProps> = ({
     />
   );
 };
-
-export default CodeEditorSidebar;

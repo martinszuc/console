@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AsyncComponent } from '../utils/async';
 
@@ -9,7 +9,7 @@ const DroppableFileInput = (props: any) => (
   />
 );
 
-export const IDPCAFileInput: React.FC<IDPCAFileInputProps> = ({
+export const IDPCAFileInput: FC<IDPCAFileInputProps> = ({
   id,
   value,
   onChange,
@@ -17,14 +17,17 @@ export const IDPCAFileInput: React.FC<IDPCAFileInputProps> = ({
 }) => {
   const { t } = useTranslation();
   return (
-    <div className="form-group">
+    <div className="pf-v6-c-form" style={{ display: 'contents' }}>
       <DroppableFileInput
         onChange={onChange}
         inputFileData={value}
         id={id}
         label={t('public~CA file')}
+        filenamePlaceholder={t('public~PEM-encoded CA bundle')}
+        textareaFieldHelpText={t(
+          'public~PEM-encoded CA certificate file used to verify the remote server certificate.',
+        )}
         isRequired={isRequired}
-        hideContents
       />
     </div>
   );

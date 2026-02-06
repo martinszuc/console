@@ -1,4 +1,5 @@
-import * as React from 'react';
+import type { FC } from 'react';
+import { useEffect, useState } from 'react';
 import { css } from '@patternfly/react-styles';
 import { Link } from 'react-router-dom-v5-compat';
 import { useTranslation } from 'react-i18next';
@@ -12,12 +13,11 @@ import {
   modelFor,
   k8sList,
 } from '../../module/k8s';
-import { useSafetyFirst } from '@console/dynamic-plugin-sdk';
 import { findOwner, matchOwnerAndCSV } from '../../module/k8s/managed-by';
 import { ClusterServiceVersionModel } from '@console/operator-lifecycle-manager/src/models';
 import { ClusterServiceVersionKind } from '@console/operator-lifecycle-manager';
 
-export const ManagedByOperatorResourceLink: React.FCC<ManagerLinkProps> = ({
+export const ManagedByOperatorResourceLink: FC<ManagerLinkProps> = ({
   csvName,
   namespace,
   owner,
@@ -49,11 +49,11 @@ export const ManagedByOperatorResourceLink: React.FCC<ManagerLinkProps> = ({
   );
 };
 
-export const ManagedByOperatorLink: React.FCC<ManagedByLinkProps> = ({ obj, className }) => {
+export const ManagedByOperatorLink: FC<ManagedByLinkProps> = ({ obj, className }) => {
   const { t } = useTranslation();
-  const [data, setData] = useSafetyFirst<ClusterServiceVersionKind[] | undefined>(undefined);
+  const [data, setData] = useState<ClusterServiceVersionKind[] | undefined>(undefined);
   const namespace = obj.metadata.namespace;
-  React.useEffect(() => {
+  useEffect(() => {
     if (!namespace) {
       return;
     }

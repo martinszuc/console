@@ -1,3 +1,4 @@
+import type { FC } from 'react';
 import {
   MouseEventHandler,
   ReactNode,
@@ -11,7 +12,7 @@ import {
 } from 'react';
 import { useSelector } from 'react-redux';
 import { Base64 } from 'js-base64';
-import * as _ from 'lodash-es';
+import * as _ from 'lodash';
 import { Trans, useTranslation } from 'react-i18next';
 import { detect } from 'chardet';
 import {
@@ -38,7 +39,6 @@ import {
 import { LogViewer, LogViewerSearch } from '@patternfly/react-log-viewer';
 import {
   BugIcon,
-  CogIcon,
   CompressIcon,
   DownloadIcon,
   ExpandIcon,
@@ -209,7 +209,7 @@ const showDebugAction = (pod: PodKind, containerName: string) => {
 };
 
 // Component for log stream controls
-const LogControls: React.FCC<LogControlsProps> = ({
+const LogControls: FC<LogControlsProps> = ({
   dropdown,
   toggleFullscreen,
   currentLogURL,
@@ -354,7 +354,7 @@ const LogControls: React.FCC<LogControlsProps> = ({
           ref={toggleRef}
           onClick={() => setIsOptionsOpen((isOpen) => !isOpen)}
           isExpanded={isOptionsOpen}
-          icon={<CogIcon />}
+          isSettings
           data-test="resource-log-options-toggle"
         >
           <span className="pf-v6-u-display-none pf-v6-u-display-inline-on-lg">{t('Options')}</span>
@@ -502,14 +502,14 @@ const LogControls: React.FCC<LogControlsProps> = ({
 };
 
 /** helper for opening a new window with raw logs. this is so we don't mess with the previous i18n string */
-const LogLink: React.FCC<{ children: ReactNode; href: string }> = ({ children, href }) => (
+const LogLink: FC<{ children: ReactNode; href: string }> = ({ children, href }) => (
   <ExternalLink component="button" onClick={handleRawLogs(href)}>
     {children}
   </ExternalLink>
 );
 
 // Resource agnostic log component
-export const ResourceLog: React.FCC<ResourceLogProps> = ({
+export const ResourceLog: FC<ResourceLogProps> = ({
   bufferSize = DEFAULT_BUFFER_SIZE,
   containerName,
   dropdown,

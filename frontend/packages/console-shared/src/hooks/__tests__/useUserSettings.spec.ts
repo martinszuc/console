@@ -1,9 +1,8 @@
-import { act } from 'react-dom/test-utils';
+import { act, renderHook } from '@testing-library/react';
 import { useSelector } from 'react-redux';
 import { useFavoritesOptions } from '@console/internal/components/useFavoritesOptions';
 import { useK8sWatchResource } from '@console/internal/components/utils/k8s-watch-hook';
 import { ConfigMapKind } from '@console/internal/module/k8s';
-import { testHook } from '@console/shared/src/test-utils/hooks-utils';
 import {
   createConfigMap,
   updateConfigMap,
@@ -84,7 +83,7 @@ describe('useUserSettings', () => {
     useK8sWatchResourceMock.mockReturnValue([null, false, null]);
     updateConfigMapMock.mockReturnValue(Promise.resolve({}));
 
-    const { result, rerender } = testHook(() => useUserSettings('console.key', 'default value'));
+    const { result, rerender } = renderHook(() => useUserSettings('console.key', 'default value'));
 
     // Expect loading
     expect(result.current).toEqual([undefined, expect.any(Function), false]);
@@ -126,7 +125,7 @@ describe('useUserSettings', () => {
     useK8sWatchResourceMock.mockReturnValue([null, false, null]);
     updateConfigMapMock.mockReturnValue(Promise.resolve({}));
 
-    const { result, rerender } = testHook(() => useUserSettings('console.key', 'default value'));
+    const { result, rerender } = renderHook(() => useUserSettings('console.key', 'default value'));
 
     // Expect loading
     expect(result.current).toEqual([undefined, expect.any(Function), false]);
@@ -168,7 +167,7 @@ describe('useUserSettings', () => {
     useK8sWatchResourceMock.mockReturnValue([null, false, null]);
     updateConfigMapMock.mockReturnValue(Promise.resolve({}));
 
-    const { result, rerender } = testHook(() => useUserSettings('console.key', 'default value'));
+    const { result, rerender } = renderHook(() => useUserSettings('console.key', 'default value'));
 
     // Expect loading
     expect(result.current).toEqual([undefined, expect.any(Function), false]);
@@ -195,7 +194,7 @@ describe('useUserSettings', () => {
     // Mock loading
     useK8sWatchResourceMock.mockReturnValue([null, false, null]);
 
-    const { result, rerender } = testHook(() => useUserSettings('console.key', 'default value'));
+    const { result, rerender } = renderHook(() => useUserSettings('console.key', 'default value'));
 
     // Expect loading
     expect(result.current).toEqual([undefined, expect.any(Function), false]);
@@ -223,7 +222,7 @@ describe('useUserSettings', () => {
     };
     useK8sWatchResourceMock.mockReturnValue([savedDataWithEncodedCharConfigMap, true, null]);
 
-    const { result } = testHook(() =>
+    const { result } = renderHook(() =>
       useUserSettings('invalid-char-:-is-replaced-with-an-underline', 'default value'),
     );
 
@@ -239,7 +238,7 @@ describe('useUserSettings', () => {
     useK8sWatchResourceMock.mockReturnValue([emptyConfigMap, true, null]);
     updateConfigMapMock.mockReturnValue(Promise.resolve({}));
 
-    const { result } = testHook(() => useUserSettings('console.key', 'default value'));
+    const { result } = renderHook(() => useUserSettings('console.key', 'default value'));
 
     // Expect default value with loaded
     expect(result.current).toEqual(['default value', expect.any(Function), true]);
@@ -257,7 +256,7 @@ describe('useUserSettings', () => {
     // Mock already loaded data
     useK8sWatchResourceMock.mockReturnValue([savedDataConfigMap, true, null]);
 
-    const { result } = testHook(() => useUserSettings('console.key', 'default value'));
+    const { result } = renderHook(() => useUserSettings('console.key', 'default value'));
 
     // Expect saved data
     expect(result.current).toEqual(['saved value', expect.any(Function), true]);
@@ -270,7 +269,7 @@ describe('useUserSettings', () => {
     // Mock loading
     useK8sWatchResourceMock.mockReturnValue([null, false, null]);
 
-    const { result, rerender } = testHook(() => useUserSettings('console.key', 'default value'));
+    const { result, rerender } = renderHook(() => useUserSettings('console.key', 'default value'));
 
     // Expect loading
     expect(result.current).toEqual([undefined, expect.any(Function), false]);
@@ -292,7 +291,7 @@ describe('useUserSettings', () => {
     // Mock already loaded data
     useK8sWatchResourceMock.mockReturnValue([savedDataConfigMap, true, null]);
 
-    const { result } = testHook(() => useUserSettings('console.key', 'default value'));
+    const { result } = renderHook(() => useUserSettings('console.key', 'default value'));
 
     // Expect saved data
     expect(result.current).toEqual(['saved value', expect.any(Function), true]);
@@ -306,7 +305,7 @@ describe('useUserSettings', () => {
     useK8sWatchResourceMock.mockReturnValue([savedDataConfigMap, true, null]);
     updateConfigMapMock.mockReturnValue(Promise.resolve({}));
 
-    const { result, rerender } = testHook(() => useUserSettings('console.key', 'default value'));
+    const { result, rerender } = renderHook(() => useUserSettings('console.key', 'default value'));
 
     // Expect saved data
     expect(result.current).toEqual(['saved value', expect.any(Function), true]);
@@ -335,7 +334,7 @@ describe('useUserSettings', () => {
     useK8sWatchResourceMock.mockReturnValue([emptyConfigMap, true, null]);
     updateConfigMapMock.mockReturnValue(Promise.resolve({}));
 
-    const { result, rerender } = testHook(() => useUserSettings('console.key', 'default value'));
+    const { result, rerender } = renderHook(() => useUserSettings('console.key', 'default value'));
 
     // Expect saved data
     expect(result.current).toEqual(['default value', expect.any(Function), true]);
@@ -367,7 +366,7 @@ describe('useUserSettings', () => {
     useK8sWatchResourceMock.mockReturnValue([emptyConfigMap, true, null]);
     updateConfigMapMock.mockReturnValue(Promise.resolve({}));
 
-    const { result, rerender } = testHook(() =>
+    const { result, rerender } = renderHook(() =>
       useUserSettings('console.key', 'default value', true),
     );
 
@@ -381,6 +380,16 @@ describe('useUserSettings', () => {
         expect(oldValue).toEqual('default value');
         return 'new value';
       });
+    });
+
+    // With sync=true, the hook returns the value from cfData after the request completes.
+    // Simulate the server update by updating the mock to return the new value.
+    await act(async () => {
+      useK8sWatchResourceMock.mockReturnValue([
+        { ...emptyConfigMap, data: { 'console.key': 'new value' } },
+        true,
+        null,
+      ]);
       rerender();
     });
 
@@ -401,7 +410,7 @@ describe('useUserSettings', () => {
     useK8sWatchResourceMock.mockReturnValue([savedDataConfigMap, true, null]);
     updateConfigMapMock.mockReturnValue(Promise.resolve({}));
 
-    const { result, rerender } = testHook(() => useUserSettings('console.key', 'default value'));
+    const { result, rerender } = renderHook(() => useUserSettings('console.key', 'default value'));
 
     // Expect saved data
     expect(result.current).toEqual(['saved value', expect.any(Function), true]);
@@ -433,7 +442,7 @@ describe('useUserSettings', () => {
     useK8sWatchResourceMock.mockReturnValue([savedDataConfigMap, true, null]);
     updateConfigMapMock.mockReturnValue(Promise.resolve({}));
 
-    const { result, rerender } = testHook(() =>
+    const { result, rerender } = renderHook(() =>
       useUserSettings('console.key', 'default value', true),
     );
 
@@ -447,6 +456,16 @@ describe('useUserSettings', () => {
         expect(oldValue).toEqual('saved value');
         return 'new value';
       });
+    });
+
+    // With sync=true, the hook returns the value from cfData after the request completes.
+    // Simulate the server update by updating the mock to return the new value.
+    await act(async () => {
+      useK8sWatchResourceMock.mockReturnValue([
+        { ...emptyConfigMap, data: { 'console.key': 'new value' } },
+        true,
+        null,
+      ]);
       rerender();
     });
 
@@ -467,7 +486,7 @@ describe('useUserSettings', () => {
     useK8sWatchResourceMock.mockReturnValue([savedDataConfigMap, true, null]);
     updateConfigMapMock.mockReturnValue(Promise.resolve({}));
 
-    const { result, rerender } = testHook(() => useUserSettings('console.key', 'default value'));
+    const { result, rerender } = renderHook(() => useUserSettings('console.key', 'default value'));
 
     // Expect saved data
     expect(result.current).toEqual(['saved value', expect.any(Function), true]);
@@ -515,7 +534,7 @@ describe('useUserSettings', () => {
     useK8sWatchResourceMock.mockReturnValue([savedDataConfigMap, true, null]);
     updateConfigMapMock.mockReturnValue(Promise.resolve({}));
 
-    const { result, rerender } = testHook(() =>
+    const { result, rerender } = renderHook(() =>
       useUserSettings('console.key', 'default value', true),
     );
 
@@ -544,6 +563,16 @@ describe('useUserSettings', () => {
         expect(oldValue).toEqual('magically changed value');
         return 'new value';
       });
+    });
+
+    // With sync=true, the hook returns the value from cfData after the request completes.
+    // Simulate the server update by updating the mock to return the new value.
+    await act(async () => {
+      useK8sWatchResourceMock.mockReturnValue([
+        { ...emptyConfigMap, data: { 'console.key': 'new value' } },
+        true,
+        null,
+      ]);
       rerender();
     });
 
@@ -563,7 +592,7 @@ describe('useUserSettings', () => {
     // Mock loading
     useK8sWatchResourceMock.mockReturnValue([null, false, null]);
 
-    const { result, rerender } = testHook(() => useUserSettings('console.key', 'default value'));
+    const { result, rerender } = renderHook(() => useUserSettings('console.key', 'default value'));
 
     // Expect loading data
     expect(result.current).toEqual([undefined, expect.any(Function), false]);
@@ -598,7 +627,7 @@ describe('useUserSettings', () => {
     // Mock loading
     useK8sWatchResourceMock.mockReturnValue([null, false, null]);
 
-    const { result, rerender } = testHook(() => useUserSettings('console.key', 'default value'));
+    const { result, rerender } = renderHook(() => useUserSettings('console.key', 'default value'));
 
     // Expect loading data
     expect(result.current).toEqual([undefined, expect.any(Function), false]);
@@ -635,7 +664,7 @@ describe('useUserSettings', () => {
     // Mock loading
     useK8sWatchResourceMock.mockReturnValue([null, false, null]);
 
-    const { result, rerender } = testHook(() => useUserSettings('console.key', 'default value'));
+    const { result, rerender } = renderHook(() => useUserSettings('console.key', 'default value'));
 
     // Expect loading data
     expect(result.current).toEqual([undefined, expect.any(Function), false]);
@@ -675,7 +704,7 @@ describe('useUserSettings', () => {
     };
     window.addEventListener('storage', storageListener);
 
-    const { result } = testHook(() => useUserSettings('impersonate.key', 'impersonate.value'));
+    const { result } = renderHook(() => useUserSettings('impersonate.key', 'impersonate.value'));
 
     expect(result.current).toEqual(['impersonate.value', expect.any(Function), true]);
 

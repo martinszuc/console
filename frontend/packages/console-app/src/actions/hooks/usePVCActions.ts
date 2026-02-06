@@ -1,9 +1,14 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ModifyVACModal } from '@console/app/src/components/modals/modify-vac-modal';
 import { Action } from '@console/dynamic-plugin-sdk';
+import { useOverlay } from '@console/dynamic-plugin-sdk/src/app/modal-support/useOverlay';
 import { useDeepCompareMemoize } from '@console/dynamic-plugin-sdk/src/utils/k8s/hooks/useDeepCompareMemoize';
-import { clonePVCModal, expandPVCModal } from '@console/internal/components/modals';
-import deletePVCModal from '@console/internal/components/modals/delete-pvc-modal';
+import {
+  LazyClonePVCModalOverlay,
+  LazyDeletePVCModalOverlay,
+  LazyExpandPVCModalOverlay,
+} from '@console/internal/components/modals';
 import { asAccessReview } from '@console/internal/components/utils/rbac';
 import { VolumeSnapshotModel, PersistentVolumeClaimModel } from '@console/internal/models';
 import { PersistentVolumeClaimKind } from '@console/internal/module/k8s';
@@ -34,6 +39,7 @@ export const usePVCActions = (
   filterActions?: PVCActionCreator[],
 ): Action[] => {
   const { t } = useTranslation();
+  const launchModal = useOverlay();
 
   const memoizedFilterActions = useDeepCompareMemoize(filterActions);
 
@@ -43,7 +49,7 @@ export const usePVCActions = (
         id: 'expand-pvc',
         label: t('console-app~Expand PVC'),
         cta: () =>
-          expandPVCModal({
+          launchModal(LazyExpandPVCModalOverlay, {
             kind: PersistentVolumeClaimModel,
             resource: obj,
           }),
@@ -64,24 +70,28 @@ export const usePVCActions = (
         label: t('console-app~Clone PVC'),
         disabled: obj?.status?.phase !== 'Bound',
         tooltip: obj?.status?.phase !== 'Bound' ? t('console-app~PVC is not Bound') : '',
-        cta: () =>
-          clonePVCModal({
-            kind: PersistentVolumeClaimModel,
-            resource: obj,
-          }),
+        cta: () => launchModal(LazyClonePVCModalOverlay, { resource: obj }),
         accessReview: asAccessReview(PersistentVolumeClaimModel, obj, 'create'),
+      }),
+      [PVCActionCreator.ModifyVAC]: () => ({
+        id: 'modify-vac',
+        label: t('console-app~Modify VolumeAttributesClass'),
+        disabled: obj?.status?.phase !== 'Bound',
+        tooltip:
+          obj?.status?.phase !== 'Bound'
+            ? t('console-app~PVC must be Bound to modify VolumeAttributesClass')
+            : '',
+        cta: () => launchModal(ModifyVACModal, { resource: obj }),
+        accessReview: asAccessReview(PersistentVolumeClaimModel, obj, 'patch'),
       }),
       [PVCActionCreator.DeletePVC]: () => ({
         id: 'delete-pvc',
         label: t('public~Delete PersistentVolumeClaim'),
-        cta: () =>
-          deletePVCModal({
-            pvc: obj,
-          }),
+        cta: () => launchModal(LazyDeletePVCModalOverlay, { pvc: obj }),
         accessReview: asAccessReview(PersistentVolumeClaimModel, obj, 'delete'),
       }),
     }),
-    [t, obj],
+    [t, obj, launchModal],
   );
 
   // filter and initialize requested actions or construct list of all PVCActions
@@ -89,7 +99,13 @@ export const usePVCActions = (
     if (memoizedFilterActions) {
       return memoizedFilterActions.map((creator) => factory[creator]());
     }
-    return [factory.ExpandPVC(), factory.PVCSnapshot(), factory.ClonePVC(), factory.DeletePVC()];
+    return [
+      factory.ExpandPVC(),
+      factory.PVCSnapshot(),
+      factory.ClonePVC(),
+      factory.ModifyVAC(),
+      factory.DeletePVC(),
+    ];
   }, [factory, memoizedFilterActions]);
   return actions;
 };

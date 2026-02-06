@@ -1,5 +1,5 @@
-import * as React from 'react';
-import { useCallback } from 'react';
+import type { FC } from 'react';
+import { createContext, useContext, useMemo, Suspense, useCallback } from 'react';
 import { getMachineAWSPlacement, getMachineRole } from '@console/shared/src/selectors/machine';
 import { getMachineSetInstanceType } from '@console/shared/src/selectors/machineSet';
 import { DASH } from '@console/shared/src/constants/ui';
@@ -9,7 +9,6 @@ import {
   actionsCellProps,
   cellIsStickyProps,
   getNameCellProps,
-  initialFiltersDefault,
   ConsoleDataView,
 } from '@console/app/src/components/data-view/ConsoleDataView';
 import {
@@ -61,11 +60,11 @@ import { convertToBaseValue, formatBytesAsGiB } from './utils/units';
 import { ResourceEventStream } from './events';
 import { MachinesCell } from './control-plane-machine-set';
 
-const CapacityResolverContext = React.createContext<CapacityResolverContextType | null>(null);
+const CapacityResolverContext = createContext<CapacityResolverContextType | null>(null);
 
-const CPUCell: React.FC<{ obj: MachineSetKind }> = ({ obj }) => {
+const CPUCell: FC<{ obj: MachineSetKind }> = ({ obj }) => {
   const { t } = useTranslation();
-  const context = React.useContext(CapacityResolverContext);
+  const context = useContext(CapacityResolverContext);
   if (!context) {
     return <span>{DASH}</span>;
   }
@@ -73,9 +72,9 @@ const CPUCell: React.FC<{ obj: MachineSetKind }> = ({ obj }) => {
   return <span>{t('public~{{count}} core', { count: cpu })}</span>;
 };
 
-const MemoryCell: React.FC<{ obj: MachineSetKind }> = ({ obj }) => {
+const MemoryCell: FC<{ obj: MachineSetKind }> = ({ obj }) => {
   const { t } = useTranslation();
-  const context = React.useContext(CapacityResolverContext);
+  const context = useContext(CapacityResolverContext);
   if (!context) {
     return <span>{DASH}</span>;
   }
@@ -99,6 +98,7 @@ const useMachineCountModal = ({ resource }: ConfigureCountModalProps) => {
     resourceKind: MachineSetModel,
     resource,
     titleKey: 'public~Edit Machine count',
+    // t('public~{{resourceKind}} maintain the proper number of healthy machines.')
     messageKey: 'public~{{resourceKind}} maintain the proper number of healthy machines.',
     messageVariables: { resourceKind: MachineSetModel.labelPlural },
     path: '/spec/replicas',
@@ -133,7 +133,7 @@ const tableColumnInfo = [
   { id: '' },
 ];
 
-export const MachineCounts: React.FC<MachineCountsProps> = ({ resourceKind, resource }) => {
+export const MachineCounts: FC<MachineCountsProps> = ({ resourceKind, resource }) => {
   const editReplicas = useMachineCountModal({ resource });
   const desiredReplicas = getDesiredReplicas(resource);
   const replicas = getReplicas(resource);
@@ -221,11 +221,11 @@ export const MachineCounts: React.FC<MachineCountsProps> = ({ resourceKind, reso
   );
 };
 
-export const MachineTabPage: React.FC<MachineTabPageProps> = ({ obj }) => (
+export const MachineTabPage: FC<MachineTabPageProps> = ({ obj }) => (
   <MachinePage namespace={obj.metadata.namespace} showTitle={false} selector={obj.spec.selector} />
 );
 
-const MachineSetDetails: React.FC<MachineSetDetailsProps> = ({ obj }) => {
+const MachineSetDetails: FC<MachineSetDetailsProps> = ({ obj }) => {
   const machineRole = getMachineRole(obj);
   const { availabilityZone, region } = getMachineAWSPlacement(obj);
   const instanceType = getMachineSetInstanceType(obj);
@@ -278,9 +278,9 @@ const MachineSetDetails: React.FC<MachineSetDetailsProps> = ({ obj }) => {
 
 const useMachineSetColumns = (): TableColumn<MachineSetKind>[] => {
   const { t } = useTranslation();
-  const context = React.useContext(CapacityResolverContext);
+  const context = useContext(CapacityResolverContext);
 
-  const columns: TableColumn<MachineSetKind>[] = React.useMemo(() => {
+  const columns: TableColumn<MachineSetKind>[] = useMemo(() => {
     return [
       {
         title: t('public~Name'),
@@ -405,16 +405,11 @@ const getDataViewRows = (
   });
 };
 
-const MachineSetListContent: React.FCC<MachineSetListProps> = ({
-  data,
-  loaded,
-  loadError,
-  ...props
-}) => {
+const MachineSetListContent: FC<MachineSetListProps> = ({ data, loaded, loadError, ...props }) => {
   const columns = useMachineSetColumns();
 
   return (
-    <React.Suspense fallback={<LoadingBox />}>
+    <Suspense fallback={<LoadingBox />}>
       <ConsoleDataView<MachineSetKind>
         {...props}
         label={MachineSetModel.labelPlural}
@@ -422,20 +417,14 @@ const MachineSetListContent: React.FCC<MachineSetListProps> = ({
         loaded={loaded}
         loadError={loadError}
         columns={columns}
-        initialFilters={initialFiltersDefault}
         getDataViewRows={getDataViewRows}
         hideColumnManagement={true}
       />
-    </React.Suspense>
+    </Suspense>
   );
 };
 
-export const MachineSetList: React.FCC<MachineSetListProps> = ({
-  data,
-  loaded,
-  loadError,
-  ...props
-}) => {
+export const MachineSetList: FC<MachineSetListProps> = ({ data, loaded, loadError, ...props }) => {
   const [machines] = useK8sWatchResource<MachineKind[]>(MachinesResource);
   const [nodes] = useK8sWatchResource<NodeKind[]>(NodesResource);
 
@@ -456,7 +445,7 @@ export const MachineSetList: React.FCC<MachineSetListProps> = ({
     [machines, nodes],
   );
 
-  const contextValue = React.useMemo(() => ({ capacityResolver }), [capacityResolver]);
+  const contextValue = useMemo(() => ({ capacityResolver }), [capacityResolver]);
 
   return (
     <CapacityResolverContext.Provider value={contextValue}>
@@ -465,7 +454,7 @@ export const MachineSetList: React.FCC<MachineSetListProps> = ({
   );
 };
 
-export const MachineSetPage: React.FC<MachineSetPageProps> = ({
+export const MachineSetPage: FC<MachineSetPageProps> = ({
   namespace,
   selector,
   showTitle = true,
@@ -509,7 +498,7 @@ export const MachineSetPage: React.FC<MachineSetPageProps> = ({
   );
 };
 
-export const MachineSetDetailsPage: React.FC = (props) => (
+export const MachineSetDetailsPage: FC = (props) => (
   <DetailsPage
     {...props}
     kind={machineSetReference}

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { FC, ReactNode } from 'react';
 import { Icon } from '@patternfly/react-core';
 import { useTranslation } from 'react-i18next';
 import { Link } from 'react-router-dom-v5-compat';
@@ -9,20 +9,20 @@ import {
 } from '@console/dynamic-plugin-sdk';
 
 interface InventoryItemProps {
-  children?: React.ReactNode;
+  children?: ReactNode;
 }
 
-const InventoryItem: React.FCC<InventoryItemProps> = ({ children }) => (
+const InventoryItem: FC<InventoryItemProps> = ({ children }) => (
   <div className="co-inventory-card__item">{children}</div>
 );
 
-export const InventoryItemLoading: React.FC = () => <div className="skeleton-inventory" />;
+export const InventoryItemLoading: FC = () => <div className="skeleton-inventory" />;
 
-export const InventoryItemTitle: React.FCC<InventoryItemTitleProps> = ({ children }) => (
+export const InventoryItemTitle: FC<InventoryItemTitleProps> = ({ children }) => (
   <div className="co-inventory-card__item-title">{children}</div>
 );
 
-export const InventoryItemBody: React.FCC<InventoryItemBodyProps> = ({ error, children }) => {
+export const InventoryItemBody: FC<InventoryItemBodyProps> = ({ error, children }) => {
   const { t } = useTranslation();
   return (
     <div className="co-inventory-card__item-status">
@@ -35,11 +35,7 @@ export const InventoryItemBody: React.FCC<InventoryItemBodyProps> = ({ error, ch
   );
 };
 
-export const InventoryItemStatus: React.FC<InventoryItemStatusProps> = ({
-  count,
-  icon,
-  linkTo,
-}) => {
+export const InventoryItemStatus: FC<InventoryItemStatusProps> = ({ count, icon, linkTo }) => {
   const body = (
     <>
       <span className="co-inventory-card__status-count">{count}</span> <Icon size="xl">{icon}</Icon>

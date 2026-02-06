@@ -1,19 +1,19 @@
-import { useResolvedExtensions } from '@console/dynamic-plugin-sdk';
+import { renderHook } from '@testing-library/react';
 import { HELM_CHART_CATALOG_TYPE_ID } from '@console/helm-plugin/src/const';
+import { useExtensions } from '@console/plugin-sdk/src/api/useExtensions';
 import {
   useGetAllDisabledSubCatalogs,
   isCatalogTypeEnabled,
   useIsSoftwareCatalogEnabled,
 } from '@console/shared';
-import { testHook } from '@console/shared/src/test-utils/hooks-utils';
 import { mockExtensions } from './catalogTypeExtensions.data';
 
-jest.mock('@console/dynamic-plugin-sdk/src/api/useResolvedExtensions', () => ({
-  useResolvedExtensions: jest.fn(),
+jest.mock('@console/plugin-sdk/src/api/useExtensions', () => ({
+  useExtensions: jest.fn(),
 }));
 
-const useResolvedExtensionsMock = useResolvedExtensions as jest.Mock;
-useResolvedExtensionsMock.mockReturnValue([mockExtensions, true]);
+const useExtensionsMock = useExtensions as jest.Mock;
+useExtensionsMock.mockReturnValue(mockExtensions);
 
 beforeEach(() => {
   delete window.SERVER_FLAGS.developerCatalogTypes;
@@ -75,89 +75,74 @@ describe('isSubCatalogTypeEnabled - get sub-catalog status', () => {
 
 describe('useIsSoftwareCatalogEnabled - check if software catalog is enabled or not', () => {
   it('should show software catalog as enabled when enabled list is empty', () => {
-    testHook(() => {
-      window.SERVER_FLAGS.developerCatalogTypes = '{"state" : "Enabled" , "enabled": [] }';
-      const isEnabled = useIsSoftwareCatalogEnabled();
-      expect(isEnabled).toBe(true);
-    });
+    window.SERVER_FLAGS.developerCatalogTypes = '{"state" : "Enabled" , "enabled": [] }';
+    const { result } = renderHook(() => useIsSoftwareCatalogEnabled());
+    expect(result.current).toBe(true);
   });
   it('should show software catalog as disabled when disabled list is empty', () => {
-    testHook(() => {
-      window.SERVER_FLAGS.developerCatalogTypes = '{"state" : "Disabled" , "disabled": [] }';
-      const isEnabled = useIsSoftwareCatalogEnabled();
-      expect(isEnabled).toBe(false);
-    });
+    window.SERVER_FLAGS.developerCatalogTypes = '{"state" : "Disabled" , "disabled": [] }';
+    const { result } = renderHook(() => useIsSoftwareCatalogEnabled());
+    expect(result.current).toBe(false);
   });
   it('should show software catalog as enabled when enabled list is not empty', () => {
-    testHook(() => {
-      window.SERVER_FLAGS.developerCatalogTypes =
-        '{"state" : "Enabled" , "enabled": ["HelmChart"] }';
-      const isEnabled = useIsSoftwareCatalogEnabled();
-      expect(isEnabled).toBe(true);
-    });
+    window.SERVER_FLAGS.developerCatalogTypes = '{"state" : "Enabled" , "enabled": ["HelmChart"] }';
+    const { result } = renderHook(() => useIsSoftwareCatalogEnabled());
+    expect(result.current).toBe(true);
   });
   it('should show software catalog as disabled when all sub-catalogs are disabled', () => {
-    testHook(() => {
-      window.SERVER_FLAGS.developerCatalogTypes =
-        '{"state" : "Disabled" , "disabled": ["HelmChart","Devfile","EventSource","EventSink","OperatorBackedService","Sample","Template","BuilderImage"]}';
-      const isEnabled = useIsSoftwareCatalogEnabled();
-      expect(isEnabled).toBe(false);
-    });
+    window.SERVER_FLAGS.developerCatalogTypes =
+      '{"state" : "Disabled" , "disabled": ["HelmChart","Devfile","EventSource","EventSink","OperatorBackedService","Sample","Template","BuilderImage"]}';
+    const { result } = renderHook(() => useIsSoftwareCatalogEnabled());
+    expect(result.current).toBe(false);
   });
   it('should show software catalog as enabled when enabled attribute is not added', () => {
     window.SERVER_FLAGS.developerCatalogTypes = '{"state" : "Enabled" }';
-    const isEnabled = useIsSoftwareCatalogEnabled();
-    expect(isEnabled).toBe(true);
+    const { result } = renderHook(() => useIsSoftwareCatalogEnabled());
+    expect(result.current).toBe(true);
   });
-  it('should show software catalog as enabled when enabled attribute is not added', () => {
+  it('should show software catalog as disabled when disabled attribute is not added', () => {
     window.SERVER_FLAGS.developerCatalogTypes = '{"state" : "Disabled" }';
-    const isEnabled = useIsSoftwareCatalogEnabled();
-    expect(isEnabled).toBe(false);
+    const { result } = renderHook(() => useIsSoftwareCatalogEnabled());
+    expect(result.current).toBe(false);
   });
 });
 
 describe('useGetAllDisabledSubCatalogs - get all the disabled sub-catalogs', () => {
   it('should return no sub-catalog is disabled when dev catalog types are not configured', () => {
-    testHook(() => {
-      const [disabledSubCatalogs] = useGetAllDisabledSubCatalogs();
-      expect(disabledSubCatalogs.length).toBe(0);
-    });
+    const { result } = renderHook(() => useGetAllDisabledSubCatalogs());
+    const [disabledSubCatalogs] = result.current;
+    expect(disabledSubCatalogs.length).toBe(0);
   });
   it('should return no sub-catalog is disabled when HelmChart is added in disabled list', () => {
     window.SERVER_FLAGS.developerCatalogTypes =
       '{"state" : "Disabled" , "disabled": ["HelmChart"] }';
-    testHook(() => {
-      const [disabledSubCatalogs] = useGetAllDisabledSubCatalogs();
-      expect(disabledSubCatalogs.length).toBe(1);
-    });
+    const { result } = renderHook(() => useGetAllDisabledSubCatalogs());
+    const [disabledSubCatalogs] = result.current;
+    expect(disabledSubCatalogs.length).toBe(1);
   });
   it('should return all sub-catalogs are disabled when disabled list is empty', () => {
     window.SERVER_FLAGS.developerCatalogTypes = '{"state" : "Disabled" , "disabled": [] }';
-    testHook(() => {
-      const [disabledSubCatalogs] = useGetAllDisabledSubCatalogs();
-      expect(disabledSubCatalogs.length).toBe(8);
-    });
+    const { result } = renderHook(() => useGetAllDisabledSubCatalogs());
+    const [disabledSubCatalogs] = result.current;
+    expect(disabledSubCatalogs.length).toBe(8);
   });
   it('should return no sub-catalogs are disabled when enabled list is empty', () => {
     window.SERVER_FLAGS.developerCatalogTypes = '{"state" : "Enabled" , "enabled": [] }';
-    testHook(() => {
-      const [disabledSubCatalogs] = useGetAllDisabledSubCatalogs();
-      expect(disabledSubCatalogs.length).toBe(0);
-    });
+    const { result } = renderHook(() => useGetAllDisabledSubCatalogs());
+    const [disabledSubCatalogs] = result.current;
+    expect(disabledSubCatalogs.length).toBe(0);
   });
   it('should return five sub-catalogs are disabled when enabled list is having three sub-catalogs', () => {
     window.SERVER_FLAGS.developerCatalogTypes =
       '{"state" : "Enabled" , "enabled": ["Devfile","HelmChart","Sample"] }';
-    testHook(() => {
-      const [disabledSubCatalogs] = useGetAllDisabledSubCatalogs();
-      expect(disabledSubCatalogs.length).toBe(5);
-    });
+    const { result } = renderHook(() => useGetAllDisabledSubCatalogs());
+    const [disabledSubCatalogs] = result.current;
+    expect(disabledSubCatalogs.length).toBe(5);
   });
   it('should return seven sub-catalogs are disabled when enabled list is having one sub-catalog', () => {
     window.SERVER_FLAGS.developerCatalogTypes = '{"state" : "Enabled" , "enabled": ["Devfile"] }';
-    testHook(() => {
-      const [disabledSubCatalogs] = useGetAllDisabledSubCatalogs();
-      expect(disabledSubCatalogs.length).toBe(7);
-    });
+    const { result } = renderHook(() => useGetAllDisabledSubCatalogs());
+    const [disabledSubCatalogs] = result.current;
+    expect(disabledSubCatalogs.length).toBe(7);
   });
 });

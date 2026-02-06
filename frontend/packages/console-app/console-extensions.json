@@ -4,10 +4,16 @@
     "properties": {
       "id": "admin",
       "default": true,
-      "name": "%console-app~Administrator%",
+      "name": "%console-app~Core platform%",
       "icon": { "$codeRef": "perspective.icon" },
       "landingPageURL": { "$codeRef": "perspective.getLandingPageURL" },
       "importRedirectURL": { "$codeRef": "perspective.getImportRedirectURL" }
+    }
+  },
+  {
+    "type": "console.flag",
+    "properties": {
+      "handler": { "$codeRef": "detectIntegrationTest.handler" }
     }
   },
   {
@@ -15,6 +21,10 @@
     "properties": {
       "perspective": "admin",
       "tour": { "$codeRef": "getGuidedTour" }
+    },
+    "flags": {
+      "required": ["CONSOLE_CAPABILITY_GUIDEDTOUR_IS_ENABLED"],
+      "disallowed": ["INTEGRATION_TEST"]
     }
   },
   {
@@ -429,6 +439,22 @@
     "properties": {
       "model": {
         "version": "v1",
+        "kind": "VolumeAttributesClass",
+        "group": "storage.k8s.io"
+      },
+      "provider": {
+        "$codeRef": "volumeAttributesClassProvider.useVolumeAttributesClassActionsProvider"
+      }
+    },
+    "flags": {
+      "required": ["VAC_PLATFORM_SUPPORT"]
+    }
+  },
+  {
+    "type": "console.action/resource-provider",
+    "properties": {
+      "model": {
+        "version": "v1",
         "kind": "StorageClass",
         "group": "storage.k8s.io"
       },
@@ -512,6 +538,28 @@
         "kind": "Prometheus"
       },
       "provider": { "$codeRef": "prometheusProvider.usePrometheusActionsProvider" }
+    }
+  },
+  {
+    "type": "console.action/resource-provider",
+    "properties": {
+      "model": {
+        "group": "",
+        "version": "v1",
+        "kind": "ResourceQuota"
+      },
+      "provider": { "$codeRef": "defaultProvider.useDefaultActionsProvider" }
+    }
+  },
+  {
+    "type": "console.action/resource-provider",
+    "properties": {
+      "model": {
+        "group": "quota.openshift.io",
+        "version": "v1",
+        "kind": "ClusterResourceQuota"
+      },
+      "provider": { "$codeRef": "defaultProvider.useDefaultActionsProvider" }
     }
   },
   {
@@ -1008,6 +1056,9 @@
         "group": "operators.coreos.com"
       },
       "startsWith": ["operators.coreos.com", "clusterserviceversions"]
+    },
+    "flags": {
+      "disallowed": ["OLMV1_ENABLED"]
     }
   },
   {
@@ -1256,12 +1307,30 @@
     }
   },
   {
+    "type": "console.navigation/resource-cluster",
+    "properties": {
+      "perspective": "admin",
+      "section": "storage",
+      "id": "volumeattributesclasses",
+      "insertAfter": "storageclasses",
+      "name": "%console-app~VolumeAttributesClasses%",
+      "model": {
+        "group": "storage.k8s.io",
+        "version": "v1",
+        "kind": "VolumeAttributesClass"
+      }
+    },
+    "flags": {
+      "required": ["VAC_PLATFORM_SUPPORT"]
+    }
+  },
+  {
     "type": "console.navigation/resource-ns",
     "properties": {
       "perspective": "admin",
       "section": "storage",
       "id": "volumesnapshots",
-      "insertAfter": "storageclasses",
+      "insertAfter": "volumeattributesclasses",
       "name": "%console-app~VolumeSnapshots%",
       "model": {
         "group": "snapshot.storage.k8s.io",
@@ -1336,6 +1405,28 @@
         "kind": "VolumeSnapshotContent"
       },
       "provider": { "$codeRef": "defaultProvider.useDefaultActionsProvider" }
+    }
+  },
+  {
+    "type": "console.action/resource-provider",
+    "properties": {
+      "model": {
+        "group": "project.openshift.io",
+        "version": "v1",
+        "kind": "Project"
+      },
+      "provider": { "$codeRef": "projectProvider.useProjectActionsProvider" }
+    }
+  },
+  {
+    "type": "console.action/resource-provider",
+    "properties": {
+      "model": {
+        "group": "",
+        "version": "v1",
+        "kind": "Namespace"
+      },
+      "provider": { "$codeRef": "projectProvider.useNamespaceActionsProvider" }
     }
   },
   {
@@ -2407,6 +2498,12 @@
     }
   },
   {
+    "type": "console.flag/hookProvider",
+    "properties": {
+      "handler": { "$codeRef": "vacPlatformSupport.useVACPlatformSupportProvider" }
+    }
+  },
+  {
     "type": "console.action/resource-provider",
     "properties": {
       "model": {
@@ -2547,6 +2644,12 @@
         "kind": "TemplateInstance"
       },
       "provider": { "$codeRef": "defaultProvider.useDefaultActionsProvider" }
+    }
+  },
+  {
+    "type": "console.flag",
+    "properties": {
+      "handler": { "$codeRef": "techPreviewFlag.handler" }
     }
   },
   {

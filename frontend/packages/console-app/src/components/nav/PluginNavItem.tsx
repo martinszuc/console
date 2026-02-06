@@ -1,4 +1,4 @@
-import * as React from 'react';
+import type { FC } from 'react';
 import { NavItemSeparator } from '@patternfly/react-core';
 import {
   isNavSection,
@@ -9,13 +9,13 @@ import {
   isResourceNavItem,
   useActivePerspective,
 } from '@console/dynamic-plugin-sdk';
-import { LoadedExtension } from '@console/dynamic-plugin-sdk/src/types';
+import type { LoadedExtension } from '@console/dynamic-plugin-sdk/src/types';
 import { FavoriteNavItems } from '../favorite/FavoriteNavItems';
 import { NavItemHref } from './NavItemHref';
 import { NavItemResource } from './NavItemResource';
 import { NavSection } from './NavSection';
 
-export const PluginNavItem: React.FC<PluginNavItemProps> = ({ extension }) => {
+export const PluginNavItem: FC<PluginNavItemProps> = ({ extension }) => {
   const [activePerspective] = useActivePerspective();
   if (isNavSection(extension)) {
     return (

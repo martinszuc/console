@@ -1,3 +1,4 @@
+import type { FC, ReactNode } from 'react';
 import { screen } from '@testing-library/react';
 import * as utils from '@console/internal/components/utils/url-poll-hook';
 import { renderWithProviders } from '@console/shared/src/test-utils/unit-test-utils';
@@ -22,9 +23,9 @@ jest.mock('react-dnd', () => {
     ...OriginalReactDnd,
     useDrag: () => [{ isDragging: false }, jest.fn(), null],
     useDrop: () => [{ isOver: false, canDrop: false }, jest.fn()],
-    DragDropContext: ({ children }: { children: React.ReactNode }) => children,
-    DragSource: () => (component: React.FC) => component,
-    DropTarget: () => (component: React.FC) => component,
+    DragDropContext: ({ children }: { children: ReactNode }) => children,
+    DragSource: () => (component: FC) => component,
+    DropTarget: () => (component: FC) => component,
   };
 });
 
@@ -46,14 +47,11 @@ jest.mock('../components/page/DroppableTopologyComponent', () => ({
   DroppableTopologyComponent: () => 'Mock Droppable Topology Component',
 }));
 
-jest.mock('@console/dynamic-plugin-sdk', () => {
-  const actual = jest.requireActual('@console/dynamic-plugin-sdk');
-  return {
-    ...actual,
-    useAccessReview: () => true,
-    useAccessReviewAllowed: () => true,
-  };
-});
+jest.mock('@console/dynamic-plugin-sdk', () => ({
+  ...jest.requireActual('@console/dynamic-plugin-sdk'),
+  useAccessReview: () => true,
+  useAccessReviewAllowed: () => true,
+}));
 
 jest.mock('@console/internal/components/utils/url-poll-hook', () => ({
   useURLPoll: jest.fn(),
